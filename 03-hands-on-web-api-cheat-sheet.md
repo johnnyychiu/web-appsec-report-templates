@@ -17,11 +17,11 @@ Use [Command Builder](command-builder.html) → **Nmap** → choose a scanning m
 
 | Mode | Generated script selection | What it means |
 | --- | --- | --- |
-| **Safe-category vulnerability checks** | \`--script '(vuln and safe) and not (external or intrusive or dos or exploit or brute)'\` | Runs selected NSE vulnerability checks tagged as safe; this classification is not a guarantee against impact |
-| **CVE correlation (Vulners)** | \`-sV --script vulners --script-args 'vulners.mincvss=7'\` | Looks up potential CVEs by detected software/version; calls an **external service** |
-| **Broad vulnerability category** | \`--script vuln\` | May include intrusive scripts; use only with specific approval |
+| **Safe-category vulnerability checks** | `--script '(vuln and safe) and not (external or intrusive or dos or exploit or brute)'` | Runs selected NSE vulnerability checks tagged as safe; this classification is not a guarantee against impact |
+| **CVE correlation (Vulners)** | `-sV --script vulners --script-args 'vulners.mincvss=7'` | Looks up potential CVEs by detected software/version; calls an **external service** |
+| **Broad vulnerability category** | `--script vuln` | May include intrusive scripts; use only with specific approval |
 
-For an interview lab, first scan only relevant ports, then pick the most appropriate NSE mode. Before running, review available scripts with \`nmap --script-help vulners\` or \`nmap --script-help vuln\`. If the interviewer forbids external services, **do not use Vulners**; its remote API receives software/version details. A script-reported CVE is a lead, not proof: verify the affected version, patch/backport status, exposure and practical impact before including it as a confirmed finding.
+For an interview lab, first scan only relevant ports, then pick the most appropriate NSE mode. Before running, review available scripts with `nmap --script-help vulners` or `nmap --script-help vuln`. If the interviewer forbids external services, **do not use Vulners**; its remote API receives software/version details. A script-reported CVE is a lead, not proof: verify the affected version, patch/backport status, exposure and practical impact before including it as a confirmed finding.
 
 ## START HERE — 60-second triage
 
