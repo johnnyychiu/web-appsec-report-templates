@@ -4,7 +4,7 @@ Practical, **copy-and-fill** Markdown templates and hands-on command references 
 
 ## Interactive report builder (new)
 
-**[Open the report builder (index.html)](index.html)** to choose a Web/API vulnerability and automatically fill **interim mitigation**, **permanent remediation**, **business-impact wording** and **retesting guidance**. Add up to five findings and generate a draft **Executive Summary** or **Detailed Finding**, then copy or download Markdown.
+**[Open the report builder (index.html)](index.html)** to choose from **25 Web/API vulnerability types** (including SSTI) and automatically fill **interim mitigation**, **permanent remediation**, **conditional technical impact** and **retesting guidance**. Add up to five findings and generate a draft **Executive Summary** or **Detailed Finding**, then copy or download Markdown. **Business impact, likelihood, existing controls and severity justification are separate fields that require your own evidence**; the site never automatically assigns a severity.
 
 **Publish as a GitHub Pages website:** This repository contains a ready-to-run static `index.html`. If GitHub Pages is not enabled, go to **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: main → Folder: /(root) → Save**. GitHub will display the published site URL under Pages. Suggested project-site address after activation: `https://johnnyychiu.github.io/web-appsec-report-templates/` (verify Pages has deployed before sharing).
 
@@ -22,12 +22,12 @@ The builder runs entirely in your browser; it does not transmit or store finding
 
 1. **Test:** Use the [hands-on cheat sheet](03-hands-on-web-api-cheat-sheet.md) to identify an in-scope weakness using authorised test accounts and synthetic data.
 2. **Prove:** Keep baseline and modified requests, validate the relevant response or actual state, and note attack prerequisites.
-3. **Document:** Copy **Template B** for each confirmed finding. Record evidence and limitations without inventing impact.
+3. **Document:** Copy **Template B** for each confirmed finding. Record evidence, the specific business impact, attacker prerequisites, exposure, existing controls and likelihood reasoning, without inventing consequences.
 4. **Summarise:** Fill the eight facts in **Template A**, then write a short management-facing summary focused on the most significant issue(s).
 5. **Review:** Check that confirmed behaviour is distinguished from possible consequences, severity is justified and no sensitive data is disclosed.
 
 ## Vulnerabilities covered
 
-BOLA/IDOR · BFLA/refund approval · SQL injection · Stored XSS · SSRF · Session not revoked after logout · Password-reset OTP rate limiting · Mass assignment · CSRF · Unsafe file upload · CORS misconfiguration · Outdated JavaScript dependency.
+BOLA/IDOR · BFLA/refund approval · SQL injection · NoSQL injection · SSTI · OS command injection · XXE · path traversal · insecure deserialisation · Stored / Reflected / DOM XSS · SSRF · JWT validation · OAuth/OIDC · session invalidation · password-reset OTP rate limiting · mass assignment · CSRF · unsafe file upload · credentialed CORS · race conditions · business logic abuse · open redirect · outdated JavaScript dependency · verbose error messages.
 
 > **Important:** These are writing references, not ready-made claims about a real environment. Follow the actual assessment instructions and rules of engagement. Never publish credentials, session tokens, client details, personal data, private endpoints or unredacted screenshots. Risk ratings in examples are illustrative.
