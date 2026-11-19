@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Minimal-input command builder for authorised Web AppSec labs: ffuf, sqlmap, nmap, Gobuster, Hydra, SSH pivots and curl.">
+<title>Command Builder — Web AppSec</title>
+<style>
+:root{color-scheme:light;--ink:#142e45;--muted:#526e81;--bg:#f1f6fb;--line:#d5e0e9;--navy:#102f50;--blue:#1668af;--teal:#167369;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;font-size:16px}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);line-height:1.5}button,input,select{font:inherit}a{color:var(--blue)}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #55a4db;outline-offset:3px}
+.top{background:var(--navy);color:white;border-bottom:4px solid #38b8ab}.top-inner{max-width:1200px;margin:auto;padding:15px 25px;display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}.top a{color:white;text-decoration:none}.top a:hover{text-decoration:underline}.brand{font-weight:850}.brand span{color:#9fe9df}.top nav{display:flex;flex-wrap:wrap;gap:17px}
+main{max-width:1200px;margin:auto;padding:24px 25px 52px}.hero{background:linear-gradient(116deg,#123b5f,#165c7d);border-radius:18px;padding:27px 30px;color:#fff;margin-bottom:17px}.eyebrow{font-size:.69rem;text-transform:uppercase;font-weight:850;letter-spacing:.13em;color:#a7e9df}.hero h1{font-size:clamp(1.65rem,3vw,2.3rem);margin:7px 0 10px;line-height:1.18}.hero p{margin:0;color:#dcecf5;max-width:890px}
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.9fr);gap:17px;align-items:start}.panel{background:#fff;border:1px solid var(--line);border-radius:15px;padding:22px;box-shadow:0 3px 20px rgba(17,50,80,.04)}.panel h2{font-size:1.12rem;font-weight:840;margin:0 0 9px}.lead{font-size:.86rem;color:var(--muted);margin:0 0 15px}.field{margin:0 0 15px}label{display:block;font-weight:780;font-size:.88rem;margin-bottom:6px}input,select,textarea{display:block;width:100%;border:1.5px solid #bdd0df;border-radius:9px;background:#fff;padding:11px 12px;line-height:1.4;color:var(--ink);font-size:.9rem;min-height:43px}input:focus,select:focus,textarea:focus{border-color:var(--blue)}.help{display:block;color:var(--muted);font-size:.76rem;margin-top:5px}.btn{background:#fff;color:#245879;border:1px solid #bfd2e1;border-radius:9px;padding:10px 14px;font-weight:800;font-size:.84rem;min-height:42px}.btn:hover{background:#edf6fc}.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}.btn.primary:hover{background:#0e538d}.btn.ghost{background:#e9f4f1;color:#116659;border-color:#add8cb}.actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:14px 0}.console{margin:13px 0;background:#142e43;border-radius:11px;color:#ebf9f4;padding:18px;font-size:.9rem;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;user-select:text;min-height:110px}.hintpanel{margin-top:12px;background:#f2f8fb;padding:12px;border:1px solid #d7e8f1;border-radius:9px;font-size:.83rem}.hintpanel p{margin:4px 0}.note{background:#fff4dc;border-left:4px solid #dfa63e;padding:11px 13px;border-radius:7px;font-size:.82rem;margin:13px 0;color:#73501d}.status{font-size:.85rem;color:var(--muted);margin:10px 0;min-height:23px}.pill{background:#e9f5f2;color:#0d6a5b;font-size:.75rem;font-weight:750;padding:4px 8px;border-radius:7px}.docs{font-size:.85rem}.opts{display:flex;flex-wrap:wrap;gap:8px}.opts a{border:1px solid #bdd7e5;padding:8px 11px;border-radius:8px;text-decoration:none;font-weight:720;font-size:.8rem;background:#f8fbfd}.opts a:hover{background:#eaf6fc}.mini{font-size:.79rem;color:var(--muted)}.tips{margin-top:18px}.tipgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}.tipgrid>div{padding:13px;border-radius:10px;background:#f6f9fc;border:1px solid #e2ebf1;font-size:.84rem}.tipgrid b{display:block;margin-bottom:7px}.tipgrid p{font-size:.81rem;color:var(--muted);margin:0}footer{max-width:1200px;margin:auto;color:var(--muted);font-size:.78rem;padding:0 25px 28px}
+@media(max-width:930px){.workspace{grid-template-columns:1fr}.tipgrid{grid-template-columns:1fr 1fr}}@media(max-width:620px){main{padding:15px 12px 36px}.hero{padding:21px 18px}.panel{padding:16px}.tipgrid{grid-template-columns:1fr}.top-inner{padding:13px 15px}}
+</style></head><body>
+<header class="top"><div class="top-inner"><a class="brand" href="index.html">⌁ Web AppSec <span>Command Builder</span></a><nav><a href="index.html">Report Builder</a><a href="payload-library.html">Payload Library</a><a href="csrf-helper.html">CSRF Helper</a><a href="https://github.com/johnnyychiu/web-appsec-report-templates">GitHub</a></nav></div></header>
+<main><section class="hero"><div class="eyebrow">Copy-ready · Authorised lab</div><h1>Pick a tool. Enter the minimum. Copy the command.</h1><p>ffuf、Gobuster、sqlmap、Nmap、Hydra、SSH Pivot 同 curl。只會喺你嘅 Browser 生成 Bash Command，<strong>唔會自動執行</strong>；預設使用較保守掃描設定。命令會附埋用途、限制同官方文件連結。</p></section>
+<div class="workspace">
+<section class="panel"><h2>1 · Choose tool and mode</h2><div class="field"><label for="tool">Tool</label><select id="tool"></select></div><div class="field"><label for="mode">Operation</label><select id="mode"></select></div><p id="description" class="lead"></p><div id="fields"></div><div id="scopeNote" class="note">Only run copied commands against systems and accounts expressly included in your lab scope.</div></section>
+<section class="panel"><h2>2 · Copy the ready command</h2><p class="lead">Edits update the command instantly. Paste the result into the authorised lab laptop's terminal after reviewing the target.</p><div class="pill">Bash / Kali Linux syntax</div><div id="command" class="console" aria-live="polite"></div><div class="actions"><button class="btn primary" id="copy" type="button">Copy command</button><button class="btn" id="copyExplain" type="button">Copy checklist</button></div><p id="feedback" class="status" role="status"></p><div class="hintpanel"><b>Command explanation</b><div id="explanation"></div></div><h3>Lab reminders</h3><div id="tips"></div><div class="actions docs"><a id="docs" href="#" target="_blank" rel="noopener">Official tool documentation</a></div></section>
+</div>
+<section class="panel tips"><h2>Quick reference · Avoid common mistakes</h2><div class="tipgrid">
+<div><b>ffuf / Gobuster</b><p>Use small lists first. Distinguish wildcard responses from real endpoints. Fuzzing can still create high request volume even at low concurrency.</p></div>
+<div><b>sqlmap</b><p>Prefer a saved Burp request and one parameter. Start with --level=1 --risk=1; automatic detection is not proof of business impact.</p></div>
+<div><b>Nmap</b><p>Only scan agreed hosts/ports. -T2 is polite. Service detection can still interact with applications; avoid nonessential NSE scripts.</p></div>
+<div><b>Hydra</b><p>Only synthetic test credentials with a very short file and account-lockout permission. This tool can lock accounts even with one worker.</p></div>
+<div><b>SSH Pivot</b><p>Local forwarding and SOCKS bind to 127.0.0.1. ProxyJump requires working SSH credentials and explicit network scope.</p></div>
+<div><b>Wordlist check</b><p>Default paths are examples for Kali/SecLists. Run ls on the chosen wordlist first and substitute an installed file if needed.</p></div>
+</div><div class="note"><b>Security and reliability:</b> no credential dumps, no database extraction, no evasive scans, no broad password-spraying profiles. This page only prints commands, never executes them, and does not save field values to a server.</div>
+<div class="opts"><a href="payload-library.html">Payload Library</a><a href="csrf-helper.html">CSRF Lab Helper</a><a href="03-hands-on-web-api-cheat-sheet.md">Hands-on Cheat Sheet</a></div></section>
+</main><footer>Always confirm the target and obtain authorisation before execution. Command flags may vary between installed tool versions; run each tool's --help if uncertain.</footer>
+<script>
+(function(){
+'use strict';
+const TOOLS={"ffuf":{"name":"ffuf","desc":"HTTP content discovery or one-parameter fuzzing. Conservative 2 workers, 10 req/s, 180-second cap.","modes":[["path","Directory / file path"],["param","One query parameter"]],"fields":{"path":[["url","Target base URL","url","https://lab.example.test","Publicly reachable lab URL"],["words","Wordlist","select","common","Small controlled wordlist preferred"]],"param":[["url","Target base URL","url","https://lab.example.test/search","Query parameter will be appended"],["parameter","Parameter name","text","id","One test parameter at a time"],["words","Wordlist","select","common","Small controlled wordlist preferred"]]},"doc":"https://github.com/ffuf/ffuf","tips":["-u uses FUZZ as the insertion point; change it only after reviewing the target URL.","-rate 10, -t 2 and -maxtime 180 limit request volume."]},"gobuster":{"name":"Gobuster","desc":"Directory enumeration, DNS discovery or virtual host discovery with low concurrency.","modes":[["dir","Directory / file"],["dns","DNS subdomains"],["vhost","Virtual hosts"]],"fields":{"dir":[["url","Target URL","url","https://lab.example.test","Must be within authorised scope"],["words","Wordlist","select","common","Common directory list"]],"dns":[["host","Authorised base domain","host","lab.example.test","Must own / have permission to enumerate"],["words","Wordlist","select","dns","Small subdomain list"]],"vhost":[["url","Target URL","url","https://lab.example.test","VHost discovery for the same target"],["words","Wordlist","select","dns","Host wordlist"]]},"doc":"https://github.com/OJ/gobuster","tips":["Wordlist paths are examples: verify they exist on the provided laptop.","Gobuster can cause many requests; stop on instability or rate limits."]},"sqlmap":{"name":"sqlmap","desc":"Narrow SQL injection detection from an authorised Burp request file or URL.","modes":[["request","Burp raw request file"],["url","URL / query parameter"]],"fields":{"request":[["file","Saved Burp request path","path","request.txt","Use Burp: Copy to file, with test data only"],["parameter","Test parameter","text","id","Only test one relevant input"],["technique","Detection technique","technique","B","Boolean blind is default"]],"url":[["url","Parameterised URL","url","https://lab.example.test/items?id=1","Must contain a real test parameter"],["parameter","Test parameter","text","id","Narrow the scan"],["technique","Detection technique","technique","B","Select technique after manual baseline"]]},"doc":"https://github.com/sqlmapproject/sqlmap/wiki/Usage","tips":["--level=1 --risk=1 --threads=1 uses conservative detection; no --dump, no --os-shell.","--batch automates prompts, NOT authorisation. Review request before running."]},"nmap":{"name":"Nmap","desc":"Simple host/service mapping with polite timing and limited ports.","modes":[["top","Top 100 ports"],["ports","Specific ports"]],"fields":{"top":[["host","Single authorised host","host","127.0.0.1","One host only, no CIDR sweep"]],"ports":[["host","Single authorised host","host","127.0.0.1","One host only"],["ports","TCP ports","ports","80,443,8080","Comma-separated 1–65535"]]},"doc":"https://nmap.org/book/man-briefoptions.html","tips":["-T2 uses a polite timing profile. Start with targeted ports if the lab is time-limited.","No stealth/evasion, full-subnet sweep or intrusive NSE scripts."]},"hydra":{"name":"Hydra","desc":"Lab-only login-control validation for one test account with a small local password list.","modes":[["ssh","SSH test account"],["ftp","FTP test account"]],"fields":{"ssh":[["host","Authorised lab host","host","127.0.0.1","Only a permitted service"],["user","Synthetic test username","user","labuser","One test user; no real account lists"],["list","Short test password file","path","./lab-passwords.txt","Create a small list of test-owned guesses"]],"ftp":[["host","Authorised lab host","host","127.0.0.1","Only a permitted FTP service"],["user","Synthetic test username","user","labuser","One test user; no real accounts"],["list","Short test password file","path","./lab-passwords.txt","Use a handful of agreed lab passwords"]]},"doc":"https://github.com/vanhauser-thc/thc-hydra","tips":["Hydra can lock accounts. Use only explicit permission, one synthetic account, and a tiny local wordlist.","Single worker (-t 1), stop on first success (-f); do not run large leaked-password lists."]},"ssh":{"name":"SSH / Pivot","desc":"Authorised access through a jump host, local port forwarding or SOCKS tunnelling.","modes":[["local","Local port forward (-L)"],["socks","Dynamic SOCKS (-D)"],["jump","ProxyJump (-J)"],["login","SSH login"]],"fields":{"local":[["ssh","SSH login to jump host","ssh","labuser@127.0.0.1","Authorised SSH account"],["localPort","My local port","port","8080","Bound to localhost only"],["remoteHost","Service host from jump server","host","127.0.0.1","Address reachable from the SSH server"],["remotePort","Service TCP port","port","80","Remote service port"]],"socks":[["ssh","SSH login to jump host","ssh","labuser@127.0.0.1","Authorised SSH account"],["localPort","Local SOCKS port","port","1080","Local-only SOCKS listener"]],"jump":[["ssh","SSH login to jump host","ssh","labuser@jump.example.test","First SSH hop"],["destination","SSH login to internal host","ssh","labuser@internal.example.test","Host reachable from the jump server"]],"login":[["ssh","SSH login target","ssh","labuser@127.0.0.1","Authorised direct access"]]},"doc":"https://man.openbsd.org/ssh","tips":["-L binds only to 127.0.0.1; -D is a SOCKS proxy on your machine, not a scan by itself.","-J connects through an SSH bastion; only pivot into explicitly authorised networks."]},"curl":{"name":"curl","desc":"Minimal HTTP verification for a controlled lab endpoint.","modes":[["GET","GET request"],["POST","POST JSON"],["HEAD","HEAD request"]],"fields":{"GET":[["url","Endpoint URL","url","https://lab.example.test/api/me","Authorised read-only API endpoint"]],"POST":[["url","Endpoint URL","url","https://lab.example.test/api/test","Authorised synthetic state change"],["json","Test JSON body","json","{\"name\":\"LAB_TEST\"}","Non-destructive synthetic data only"]],"HEAD":[["url","Endpoint URL","url","https://lab.example.test/api/me","Response headers only"]]},"doc":"https://curl.se/docs/manpage.html","tips":["-i shows headers; never paste live tokens into the public repository.","POST must be explicitly permitted by the lab; the command does not run automatically."]}};
+const WORDLISTS={"common":"/usr/share/seclists/Discovery/Web-Content/common.txt","raft":"/usr/share/seclists/Discovery/Web-Content/raft-small-directories.txt","dirb":"/usr/share/wordlists/dirb/common.txt","dns":"/usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt","custom":""};
+const $=id=>document.getElementById(id);
+const fields=$('fields'),tool=$('tool'),mode=$('mode'),values={};
+function make(tag,text){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;}
+function shq(s){return "'"+String(s).replace(/'/g,"'\"'\"'")+"'";}
+function validateUrl(raw){
+ const s=String(raw||'').trim();let u;try{u=new URL(s);}catch(e){throw Error('Enter an absolute http:// or https:// URL.');}
+ if(!['http:','https:'].includes(u.protocol)||u.username||u.password||/[\r\n]/.test(s))throw Error('Use HTTP(S) only, without embedded credentials.');
+ return u.href;
+}
+function validateHost(v){
+ const s=String(v||'').trim();
+ if(!/^[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(s))throw Error('Enter one host/IP only, without spaces, ranges or shell options.');
+ return s;
+}
+function validateSsh(v){
+ const s=String(v||'').trim();
+ if(!/^[A-Za-z_][A-Za-z0-9_.-]*@[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(s))throw Error('Enter an SSH login like labuser@jump.example.test.');
+ return s;
+}
+function validatePort(v){const n=Number(v);if(!Number.isInteger(n)||n<1||n>65535)throw Error('Port must be between 1 and 65535.');return String(n);}
+function validatePorts(v){
+ const nums=String(v||'').split(',').map(x=>x.trim());
+ if(!nums.length||nums.length>20)throw Error('Specify 1–20 comma-separated ports.');
+ return nums.map(validatePort).join(',');
+}
+function validateText(v,label){
+ const s=String(v||'').trim();if(!s||/[\r\n]/.test(s)||s.length>500)throw Error(label+' must be a single nonempty line.');
+ return s;
+}
+function validateField(field,v){
+ const [key,label,type]=field;
+ if(type==='url')return validateUrl(v);
+ if(type==='host')return validateHost(v);
+ if(type==='ssh')return validateSsh(v);
+ if(type==='port')return validatePort(v);
+ if(type==='ports')return validatePorts(v);
+ if(type==='user')return validateText(v,label);
+ if(type==='json'){const s=String(v||'').trim();if(s.length>6000)throw Error('JSON input too large.');try{JSON.parse(s);}catch(e){throw Error('Enter valid JSON.');}return s;}
+ if(type==='technique'&&!['B','E','U','T'].includes(v))throw Error('Choose a valid SQLi detection technique.');
+ if(type==='text'&&!/^[A-Za-z_][A-Za-z0-9_.-]*$/.test(v))throw Error('Parameter name must be a simple identifier.');
+ return validateText(v,label);
+}
+function optionsFor(field){
+ if(field[2]==='select')return [['common','SecLists common.txt (small)'],['raft','SecLists RAFT small directories'],['dirb','Dirb common.txt'],['dns','SecLists DNS top 5000'],['custom','Custom wordlist path']];
+ if(field[2]==='technique')return [['B','Boolean-based (B)'],['E','Error-based (E)'],['U','UNION-based (U)'],['T','Time-based (T)']];
+ return [];
+}
+function buildMenu(){
+ Object.entries(TOOLS).forEach(([key,config])=>{const o=make('option',config.name);o.value=key;tool.appendChild(o);});
+ tool.value='ffuf';changeTool();
+}
+function stateKey(field){return tool.value+'::'+mode.value+'::'+field;}
+function fieldValue(config){const k=stateKey(config[0]);return values[k]===undefined?config[3]:values[k];}
+function mkField(def){
+ const [key,label,type,defaultValue,help]=def;
+ const group=make('div');group.className='field';
+ const lbl=make('label',label);const id='field-'+key;lbl.htmlFor=id;group.appendChild(lbl);
+ const inp=type==='select'||type==='technique'?make('select'):make('input');
+ inp.id=id;inp.dataset.key=key;if(inp.tagName==='INPUT'){inp.type='text';inp.placeholder=defaultValue;}
+ optionsFor(def).forEach(([value,title])=>{const o=make('option',title);o.value=value;inp.appendChild(o);});
+ inp.value=fieldValue(def);
+ const change=()=>{values[stateKey(key)]=inp.value;renderCommand();};
+ inp.addEventListener('input',change);inp.addEventListener('change',change);
+ group.appendChild(inp);
+ if(help){const small=make('span',help);small.className='help';group.appendChild(small);}
+ return group;
+}
+function currentConfig(){return TOOLS[tool.value];}
+function defs(){return currentConfig().fields[mode.value];}
+function get(id){const def=defs().find(x=>x[0]===id);if(!def)throw Error('Missing field '+id);return validateField(def,fieldValue(def));}
+function getWordlist(){
+ const p=get('words');
+ if(p==='custom')return validateText($('customWords').value,'Wordlist path');
+ if(!WORDLISTS[p])throw Error('Wordlist preset not available.');
+ return WORDLISTS[p];
+}
+function renderFields(){
+ fields.textContent='';defs().forEach(d=>fields.appendChild(mkField(d)));
+ if(defs().some(d=>d[0]==='words')){
+  const custom=make('div');custom.className='field';custom.id='customGroup';
+  const lab=make('label','Custom wordlist path');lab.htmlFor='customWords';custom.appendChild(lab);
+  const inp=make('input');inp.type='text';inp.id='customWords';inp.value=values[tool.value+'::customPath']||'./lab-words.txt';
+  inp.addEventListener('input',()=>{values[tool.value+'::customPath']=inp.value;renderCommand();});
+  custom.appendChild(inp);fields.appendChild(custom);
+ }
+ renderCommand();
+}
+function changeTool(){
+ mode.textContent='';currentConfig().modes.forEach(([value,title])=>{const o=make('option',title);o.value=value;mode.appendChild(o);});
+ mode.value=currentConfig().modes[0][0];
+ $('description').textContent=currentConfig().desc;
+ $('docs').href=currentConfig().doc;
+ renderFields();
+}
+function quotePath(v){return shq(validateText(v,'File path'));}
+function generate(){
+ const t=tool.value,m=mode.value;let command='',explain='';
+ if(t==='ffuf'){
+  const base=get('url'),wordlist=getWordlist(),url=new URL(base);
+  if(!url.pathname.endsWith('/')&&m==='path')url.pathname+='/';
+  if(m==='path')url.pathname+='FUZZ';else url.searchParams.set(get('parameter'),'FUZZ');
+  command='ffuf -w '+shq(wordlist)+' -u '+shq(url.href)+' -t 2 -rate 10 -maxtime 180 -ac';
+  explain='FUZZ is replaced by each wordlist entry; -rate 10 limits request rate; 2 workers and 180 seconds cap the run.';
+ }else if(t==='gobuster'){
+  const wordlist=getWordlist();
+  if(m==='dns')command='gobuster dns -do '+shq(get('host'))+' -w '+shq(wordlist)+' -t 3';
+  else if(m==='vhost')command='gobuster vhost -u '+shq(get('url'))+' --append-domain -w '+shq(wordlist)+' -t 3';
+  else command='gobuster dir -u '+shq(get('url'))+' -w '+shq(wordlist)+' -t 3';
+  explain='Directory, DNS or VHost discovery with only three workers; results require manual verification.';
+ }else if(t==='sqlmap'){
+  const source=m==='request'?'-r '+quotePath(get('file')):'-u '+shq(get('url'));
+  command='sqlmap '+source+' -p '+shq(get('parameter'))+' --technique='+get('technique')+' --level=1 --risk=1 --threads=1 --delay=0.2 --batch';
+  explain='Narrow one-parameter detection, no database dumps or operating-system shell; adjust only with authorisation.';
+ }else if(t==='nmap'){
+  const ports=m==='ports'?'-p '+shq(get('ports')):'--top-ports 100';
+  command='nmap -sV --version-light '+ports+' -T2 --open -oN '+shq('lab-nmap.txt')+' '+shq(get('host'));
+  explain='Polite single-host TCP service scan; -oN saves plain-text results.';
+ }else if(t==='hydra'){
+  command='hydra -l '+shq(get('user'))+' -P '+shq(get('list'))+' -t 1 -f -w 5 '+shq(get('host'))+' '+m;
+  explain='One test username, one worker, stop at first success; use only a tiny authorised credential list.';
+ }else if(t==='ssh'){
+  if(m==='local')command='ssh -o ExitOnForwardFailure=yes -N -L '+shq('127.0.0.1:'+get('localPort')+':'+get('remoteHost')+':'+get('remotePort'))+' '+shq(get('ssh'));
+  else if(m==='socks')command='ssh -o ExitOnForwardFailure=yes -N -D '+shq('127.0.0.1:'+get('localPort'))+' '+shq(get('ssh'));
+  else if(m==='jump')command='ssh -J '+shq(get('ssh'))+' '+shq(get('destination'));
+  else command='ssh '+shq(get('ssh'));
+  explain=m==='local'?'Local port listening on 127.0.0.1 forwards to a service reachable from the SSH host.':m==='socks'?'Creates a localhost SOCKS tunnel. Confirm application proxy settings; this does not automatically route all commands.':m==='jump'?'Connects to the destination through the authorised SSH jump host.':'Connects directly to the authorised SSH host.';
+ }else if(t==='curl'){
+  const method=m.toUpperCase();
+  command='curl -i -sS -X '+method+' '+(m==='POST'?'-H '+shq('Content-Type: application/json')+' --data '+shq(get('json'))+' ':'')+shq(get('url'));
+  explain='Displays response headers and body where applicable, without automatically sending auth tokens.';
+ }else throw Error('Unsupported tool mode.');
+ return {command,explain};
+}
+let last='';
+function renderCommand(){
+ const group=$('customGroup');if(group){group.hidden=!(defs().some(d=>d[0]==='words')&&fieldValue(defs().find(d=>d[0]==='words'))==='custom');}
+ $('tips').textContent='';currentConfig().tips.forEach(t=>{const p=make('p','• '+t);p.className='mini';$('tips').appendChild(p);});
+ try{const x=generate();last=x.command;$('command').textContent=x.command;$('explanation').textContent=x.explain;$('copy').disabled=false;$('copyExplain').disabled=false;$('feedback').textContent='Command ready — review the target before running.';}
+ catch(e){last='';$('command').textContent='Review inputs: '+e.message;$('explanation').textContent='Correct the fields to generate a command.';$('copy').disabled=true;$('copyExplain').disabled=true;$('feedback').textContent='';}
+}
+mode.addEventListener('change',renderFields);
+tool.addEventListener('change',changeTool);
+$('copy').addEventListener('click',async()=>{if(!last)return;try{await navigator.clipboard.writeText(last);$('feedback').textContent='Command copied to clipboard.';}catch(e){$('feedback').textContent='Clipboard blocked — select the displayed command manually.';}});
+$('copyExplain').addEventListener('click',async()=>{if(!last)return;const content=last+'\n\n'+$('explanation').textContent+'\n'+currentConfig().tips.join('\n');try{await navigator.clipboard.writeText(content);$('feedback').textContent='Command + notes copied.';}catch(e){$('feedback').textContent='Clipboard blocked.';}});
+buildMenu();
+})();
+</script></body></html>
