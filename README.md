@@ -10,6 +10,19 @@ Practical, **copy-and-fill** Markdown templates and hands-on command references 
 
 The builder runs entirely in your browser; it does not transmit or store finding contents. It deliberately leaves confirmed evidence blank until you supply it. **Do not enter live client secrets or production personal data.**
 
+## Quick start for a 30-minute written test
+
+The [interactive report builder](index.html) now opens in **Exam Mode** by default:
+
+1. Enter the application / API scope and choose the **main vulnerability + severity**.
+2. Complete **five short fields** for the main finding: confirmed evidence, attack prerequisite, concrete business impact, severity justification, and any unproven outcome (optional). Only the first four are essential.
+3. Add secondary findings by **type and severity only**. Interim controls, permanent fixes, and retesting guidance are suggested automatically.
+4. Review the **100–150-word Executive Summary** and its word count; edit for evidence, risk and English; then **Copy** or **Download**.
+
+Switch to **Full Report** for detailed reproduction, screenshots, separate exposure/likelihood/controls and editable remediation. Switching modes preserves the entered facts. The button for **Detailed Finding** switches to Full Report automatically.
+
+The generated text is a **draft**, not a validated security assessment: keep the descriptions consistent with what your testing actually established and review any generic mitigation before recommending it to a client.
+
 ## Open a template
 
 | Written-test task | Document | Includes |
