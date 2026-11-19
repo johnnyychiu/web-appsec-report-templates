@@ -29,6 +29,10 @@
 | Affected asset | [Authorised application, environment, API / component] |
 | Endpoint / function | [HTTP METHOD and in-scope route, or UI workflow] |
 | Prerequisite | [Role, valid account, victim browser, token possession, etc.] |
+| Exposure / reachability | [Publicly reachable vs authenticated or internally restricted] |
+| Impact | [Confirmed technical outcome vs potential concrete business harm] |
+| Likelihood | [Qualitative estimate with exploit effort and existing control evidence] |
+| Risk rationale | [Why severity follows from impact and realistic likelihood] |
 | Status | [Confirmed / Observed but not yet validated] |
 
 **Description / root cause**
@@ -54,13 +58,17 @@
 - **Figure 3 — Impact validation:** [Data field, database state, authorised callback, browser proof or state transition demonstrating outcome].
 - **Notes:** [Request IDs, test timestamps, environment, account roles, trace ID / case ID].
 
-**Business impact**
+**Business impact — distinguish technical consequence from business harm**
 
-> If exploited, this could result in **[SPECIFIC SECURITY/PROCESS CONSEQUENCE]**, potentially leading to **[DIRECT BUSINESS IMPACT]**. This is **not** evidence that a real breach or loss occurred.
+> Testing confirmed **[ACTUAL EFFECT]**. If exploited, this could result in **[POTENTIAL TECHNICAL CONSEQUENCE]**, potentially causing **[SPECIFIC CUSTOMER / FINANCIAL / OPERATIONAL HARM]**. The assessment did **not** establish **[UNPROVEN OUTCOMES]**. Do not state a real breach or monetary loss without evidence.
 
-**Likelihood / risk assessment**
+**Likelihood — explain prerequisites, exposure, complexity and controls**
 
-> Exploitation requires **[PREREQUISITES]**. Testing established **[EVIDENCE]**, but **[LIMITATIONS / UNKNOWN CONTROLS]**. The finding is assessed as **[RATING]** because **[IMPACT + EXPLOITABILITY + EXISTING CONTROLS]**.
+> Exploitation requires **[ACCOUNT / ROLE / INTERACTION / TOKEN / NETWORK POSITION]**. The affected feature is **[INTERNET-FACING OR RESTRICTED]**, and **[DEMONSTRATED EFFORT]** was needed during testing. Verified existing controls **[HELP / DO NOT PREVENT THIS PATH / REQUIRE FURTHER CHECKING]**. The likelihood is assessed as **[LOW / MODERATE / HIGH / UNCERTAIN]** based on **[EVIDENCE-LED REASON]**.
+
+**Overall risk rating — justify the decision rather than selecting a label alone**
+
+> The proposed **[SEVERITY]** rating reflects **[IMPACT / DATA OR PROCESS AT RISK]** together with **[LIKELIHOOD AND CONTROLS]**. **[MATERIAL UNCERTAINTIES]** should be considered before finalising the rating under the client's method.
 
 **Immediate mitigation (if feasible)**
 
@@ -90,6 +98,25 @@
 **Figure caption pattern:** `Figure 2 — A Customer Service test account submitted the approval request; the test refund state changed from pending to approved (sensitive headers redacted).`
 
 **Avoid:** screenshots of a `200 OK` alone; production customer records; raw JWTs; copying external target addresses; unsupported conclusions; excessive screenshots that do not establish the security boundary.
+
+## Additional Web/API vulnerability categories
+
+The 12 detailed examples below cover the most common writing scenarios. The [interactive report builder](index.html) also includes **SSTI, OS command injection, path traversal, XXE, insecure deserialisation, JWT validation, OAuth/OIDC, open redirect, race condition, business logic, reflected/DOM XSS and NoSQL injection**. For these, use the same full template above and **only report demonstrated behaviour**.
+
+| Additional finding | Evidence to establish | Conditional impact | Typical root-cause remediation |
+| --- | --- | --- | --- |
+| **SSTI** | Harmless server-side template expression evaluated | Server-side behaviour; more severe impact depends on engine and privileges | Keep trusted template source fixed, treat input as data |
+| **OS command injection** | Controlled input changed server-side command interpretation | Service-account code execution | Avoid shells, use safe APIs and least privilege |
+| **Path traversal** | Known test-owned file retrieved outside permitted directory | Unauthorised file access | Canonical approved base directory and opaque file IDs |
+| **XXE** | Parser resolved a controlled external entity unexpectedly | File/network access depending on parser privilege | Disable DTDs/external entities |
+| **Insecure deserialisation** | Unexpected unsafe object materialisation was demonstrated | State change or execution under certain conditions | Safe formats and allowlisted types |
+| **JWT validation** | Invalid synthetic JWT actually accepted | Unauthorised identity or role claims | Verify signature, algorithm, claims, issuer/audience |
+| **OAuth/OIDC** | Controlled callback or state binding failed in a meaningful flow | Account misbinding or token exposure | Redirect/state/nonce/PKCE and token validation |
+| **Open redirect** | Browser followed an untrusted redirect | Phishing facilitation; token leakage only if proven | Trusted redirect allowlist |
+| **Race condition** | Concurrent test requests violated a business invariant | Duplicate refund/action or inconsistent state | Atomic operations, locking and idempotency |
+| **Business logic** | Unauthorised price/state transition actually persisted | Financial or operational abuse | Enforce server-side workflow invariants |
+| **Reflected/DOM XSS** | Benign browser execution in correct output/DOM context | Browser actions or information exposure | Contextual encoding and safe DOM APIs |
+| **NoSQL injection** | Unexpected query operator altered real test query results | Unauthorised data query or access | Typed schemas and safe database queries |
 
 ## Worked findings by vulnerability
 
