@@ -133,6 +133,25 @@ Prioritise XSS by temporarily displaying ticket content as plain text where oper
 | Credentialed CORS error | Sensitive API reads from untrusted web origin | Explicit origin allowlist and credential policy |
 | Outdated library | Uncertain risk until version/usage/advisory validated | Supported version and dependency management |
 
+## Additional Web/API vulnerabilities — Impact, Likelihood and Fix lookup
+
+Use these **conditional** examples to complete the universal template above. Do not imply the consequence occurred unless the test demonstrated it. Select a rating only after assessing actual exposure, prerequisites, controls and impact.
+
+| Finding | Potential technical/business impact | Likelihood depends on | Typical long-term fix |
+| --- | --- | --- | --- |
+| **SSTI** | Server-side template evaluation; possible data or service compromise if additional execution capabilities exist | Who can supply template source, engine restrictions and service privileges | Fixed trusted templates; pass untrusted values as data |
+| **OS command injection** | Unintended commands under application privileges; operational or data impact | Input reachability, shell interpretation and runtime permissions | Avoid shell execution; use safe APIs and least privilege |
+| **Path traversal** | Files outside the approved directory may become accessible | Path controls, file permissions and file sensitivity | Canonical path enforcement and opaque file IDs |
+| **XXE** | Parser may access unintended network/file resources | DTD/external entities enabled, parser environment and egress | Disable external entities; secure XML parsing |
+| **Insecure deserialisation** | Unexpected objects/state changes or further execution | Accessible serialised input, type restrictions and runtime permissions | Strict allowlisted types or safe data-only formats |
+| **JWT validation** | False identity/role assertions if invalid tokens are accepted | Token availability, verifier settings and server-side access controls | Correct signature and claims verification |
+| **OAuth/OIDC flaw** | Account misbinding or token exposure in affected sign-in flow | User interaction, state/nonce/PKCE and redirect rules | Enforce correct callback binding and token checks |
+| **Open redirect** | User redirection to untrusted destinations; phishing facilitation | User visits crafted URL, trust context, sensitive redirect parameters | Trusted redirect destinations only |
+| **Race condition** | Duplicate transaction/approval or business-rule inconsistency | Ability to race requests, concurrency window and transaction design | Atomic operations, locking and idempotency |
+| **Business logic abuse** | Financial or operational harm from unintended state/price transitions | Account role, accepted workflows and independent checks | Enforce all business rules on server |
+| **Reflected / DOM XSS** | Browser-context actions or exposure following a crafted interaction | Browser input/context, victim visit and session controls | Context-aware encoding and safe DOM APIs |
+| **NoSQL injection** | Unexpected query behaviour or access beyond intended records | Data types, query construction and database permissions | Strict typed schemas and server-built queries |
+
 ## Complete worked answers by vulnerability
 
 Every answer below is a **fictional standalone 3-paragraph executive summary**, not a statement that a real client was compromised. Use them as patterns; replace all evidence before including anything in a client report.
