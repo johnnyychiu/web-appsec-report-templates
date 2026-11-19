@@ -116,7 +116,7 @@ function renderExamFindings(){
    const selectors='<div class="fields-2"><div class="field"><label for="'+f.id+'-key">Vulnerability type</label><select id="'+f.id+'-key" data-id="'+f.id+'" data-field="key">'+makeTypes(f)+'</select></div><div class="field"><label for="'+f.id+'-severity">Severity</label><select id="'+f.id+'-severity" data-id="'+f.id+'" data-field="severity">'+makeSeverity(f)+'</select></div></div>';
    const actions='<div class="finding-actions">'+(main?'':'<button type="button" class="btn small" data-action="primary" data-id="'+f.id+'">☆ Make main finding</button>')+'<button type="button" class="btn small danger" data-action="remove" data-id="'+f.id+'"'+(state.findings.length===1?' disabled':'')+'>Remove</button></div>';
    if(!main){
-     return '<div class="exam-secondary" data-id="'+f.id+'"><div class="exam-label">F'+(i+1)+' · SECONDARY FINDING</div>'+selectors+'<p class="tiny"><strong>Suggested fix:</strong> '+escapeHTML(SHORT_FIX[f.key]||c.permanent)+'. Add technical detail only if the test asks for it.</p>'+actions+'</div>';
+     return '<div class="exam-secondary" data-id="'+f.id+'"><div class="exam-label">F'+(i+1)+' · SECONDARY FINDING</div>'+selectors+fieldEl(f,'evidence','Observed evidence (one line, optional)',{placeholder:'e.g. reset OTP accepted 50 wrong attempts without cooldown',hint:'Write only a tested result. Otherwise the findings table will flag evidence as missing.'})+'<p class="tiny"><strong>Suggested fix:</strong> '+escapeHTML(SHORT_FIX[f.key]||c.permanent)+'.</p>'+actions+'</div>';
    }
    return '<div class="exam-finding" data-id="'+f.id+'"><div class="exam-head"><strong>F'+(i+1)+' · Main finding</strong><span class="primary-pill">Complete 5 short fields</span></div><div class="exam-body">'+selectors+
      '<p class="exam-required">Use short factual phrases, not full paragraphs. This takes about 5–7 minutes.</p>'+
@@ -263,38 +263,45 @@ function countWords(s){const words=s.trim().match(/\b[\p{L}\p{N}£][\p{L}\p{N}£
 function updatePreview(){
  const ready=state.findings.filter(function(f){return !!clean(f.evidence);}).length;
  const selected=state.findings.find(function(f){return f.id===state.selectedDetailId;})||state.findings[0];
- const isSummary=state.tab==='summary';
+ const overview=state.tab==='findings',summary=state.tab==='summary';
  const primary=state.findings.find(function(f){return f.id===state.primaryId;})||state.findings[0];
- const focus=isSummary?primary:selected;
- const missing=[];
+ const focus=(overview||summary)?primary:selected,missing=[];
  if(!clean(focus.evidence))missing.push('confirmed evidence');
  if(!clean(focus.prerequisite))missing.push('attack prerequisite');
- if(!clean(focus.business))missing.push('concrete business impact');
- if(!clean(focus.severity)||!clean(focus.ratingWhy))missing.push('severity and short justification');
- if(state.mode==='full'){
-   if(!clean(focus.likelihood))missing.push('likelihood reasoning');
+ if(!clean(focus.business))missing.push('business impact');
+ if(!clean(focus.severity)||!clean(focus.ratingWhy))missing.push('severity justification');
+ if(state.mode==='full'&&!clean(focus.likelihood))missing.push('likelihood reasoning');
+ if(overview){
+  const n=state.findings.filter(function(f){return f.id!==primary.id&&!clean(f.evidence);}).length;
+  if(n)missing.push('evidence for '+n+' other finding(s)');
  }
  const warn=missing.length>0;
  if(state.mode==='exam'){
-   const done=[clean(primary.evidence),clean(primary.prerequisite),clean(primary.business),clean(primary.severity)&&clean(primary.ratingWhy)].filter(Boolean).length;
-   $('evidenceCounter').textContent='Main: '+done+'/4 essentials';
+  const done=[clean(primary.evidence),clean(primary.prerequisite),clean(primary.business),clean(primary.severity)&&clean(primary.ratingWhy)].filter(Boolean).length;
+  $('evidenceCounter').textContent='Main: '+done+'/4 essentials';
  }else{
-   $('evidenceCounter').textContent=ready+'/'+state.findings.length+' evidence filled';
+  $('evidenceCounter').textContent=ready+'/'+state.findings.length+' evidence filled';
  }
  $('evidenceWarning').hidden=!warn;
- $('evidenceWarning').textContent=(state.mode==='exam'?'Finish main finding: ':'Draft — please add: ')+missing.join(', ')+'. Validate all statements before submitting.';
- const status=$('reportStatus');status.textContent=warn?'Draft · '+missing.length+' item(s) left':'Draft · proofread before submitting';
+ $('evidenceWarning').textContent='Draft — review: '+missing.join(', ')+'. Never present unverified outcomes as confirmed.';
+ const status=$('reportStatus');
+ status.textContent=warn?'Draft · check evidence':'Draft · proofread before submitting';
  status.classList.toggle('ok',!warn);
- $('previewCaption').textContent=isSummary?'Three-paragraph management summary':'Technical finding · Markdown export';
- const output=isSummary?composeSummary():composeDetail();
- $('preview').textContent=output;
- $('preview').classList.toggle('markdown',!isSummary);
+ $('previewCaption').textContent=overview?'Overview + findings table + prioritised remediation':summary?'Three-paragraph management summary':'Detailed finding · Markdown export';
+ const output=overview?composeFindings():summary?composeSummary():composeDetail();
+ const preview=$('preview'),visual=$('findingsVisual');
+ preview.textContent=output;
+ preview.style.display=overview?'none':'';
+ preview.classList.toggle('markdown',!summary&&!overview);
+ visual.hidden=!overview;
+ if(overview)visual.innerHTML=findingsVisualMarkup();
  const words=countWords(output);
- $('wordCount').textContent=words+' words'+(isSummary&&words>150?' · over 150':isSummary&&words<100?' · under 100':'');
- $('wordCount').style.color=isSummary&&(words<100||words>150)?'#895d15':'#52647a';
- $('detailSelector').style.display=isSummary?'none':'block';
- $('tab-summary').setAttribute('aria-selected',String(isSummary));
- $('tab-detail').setAttribute('aria-selected',String(!isSummary));
+ $('wordCount').textContent=overview?words+' words · table (no fixed limit)':words+' words'+(summary&&words>150?' · over 150':summary&&words<100?' · under 100':'');
+ $('wordCount').style.color=summary&&(words<100||words>150)?'#895d15':'#52647a';
+ $('detailSelector').style.display=state.tab==='detail'?'block':'none';
+ $('tab-findings').setAttribute('aria-selected',String(overview));
+ $('tab-summary').setAttribute('aria-selected',String(summary));
+ $('tab-detail').setAttribute('aria-selected',String(state.tab==='detail'));
  $('copyMessage').textContent='';
 }
 function selectTab(tab){state.tab=tab;updatePreview();}
@@ -309,7 +316,7 @@ $('loadExample').addEventListener('click',loadExample);$('clearAll').addEventLis
 $('mode-exam').addEventListener('click',function(){setMode('exam');});$('mode-full').addEventListener('click',function(){setMode('full');});
 $('tab-findings').addEventListener('click',function(){selectTab('findings');});$('tab-summary').addEventListener('click',function(){selectTab('summary');});$('tab-detail').addEventListener('click',function(){setMode('full');selectTab('detail');});$('detailChoice').addEventListener('change',function(e){state.selectedDetailId=e.target.value;updatePreview();});
 $('copyResult').addEventListener('click',async function(){const txt=$('preview').textContent;try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(txt);}else{const t=document.createElement('textarea');t.value=txt;t.style.position='fixed';t.style.top='-9999px';document.body.appendChild(t);t.select();const ok=document.execCommand('copy');t.remove();if(!ok)throw Error('Clipboard unavailable');}$('copyMessage').textContent='Copied to clipboard.';}catch(e){$('copyMessage').textContent='Clipboard blocked. Select the preview text and copy it manually.';}});
-$('downloadResult').addEventListener('click',function(){const txt=$('preview').textContent;const name=state.tab==='summary'?'executive-summary.md':'detailed-finding.md';const blob=new Blob([txt],{type:'text/markdown;charset=utf-8'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=name;document.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url);},1000);$('copyMessage').textContent='Downloaded '+name+'.';});
+$('downloadResult').addEventListener('click',function(){const txt=$('preview').textContent;const name=state.tab==='findings'?'summary-of-findings.md':state.tab==='summary'?'executive-summary.md':'detailed-finding.md';const blob=new Blob([txt],{type:'text/markdown;charset=utf-8'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=name;document.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url);},1000);$('copyMessage').textContent='Downloaded '+name+'.';});
 $('printResult').addEventListener('click',function(){window.print();});
 reset();updateModeUI();
 })();
