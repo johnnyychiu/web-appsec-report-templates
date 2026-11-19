@@ -501,7 +501,7 @@ These complement the 14 detailed recipes and the [interactive report builder](in
 
 | Vulnerability | Quick low-impact check | What counts as evidence (and what does **not**) | Suggested fix |
 | --- | --- | --- | --- |
-| **SSTI** | In a known server-template lab field, compare literal text with a benign expression such as \`{{7*7}}\` for engines where that syntax applies | Evidence of **server-side template evaluation**, not automatic RCE; output \`49\` may also have other explanations | Fixed trusted templates; pass input as data; avoid dynamic template compilation |
+| **SSTI** | In a known server-template lab field, compare literal text with a benign expression such as `{{7*7}}` for engines where that syntax applies | Evidence of **server-side template evaluation**, not automatic RCE; output `49` may also have other explanations | Fixed trusted templates; pass input as data; avoid dynamic template compilation |
 | **OS command injection** | Review an in-scope utility wrapper and compare harmless test input with normal output | Verify a controlled command-interpretation effect; errors alone do not prove execution | No shell for untrusted data; safe APIs and least privilege |
 | **XXE** | Submit synthetic XML with a controlled lab entity/reference if allowed | Parser unexpectedly resolves the entity; do not infer private-file disclosure | Secure XML parser configuration; disable DTDs/external entities |
 | **Insecure deserialisation** | Try a benign unexpected type/property in an authorised serialised message | Unsafe type/side effect actually instantiated; mere decoding is not exploitation | Safer data formats, strict schema/type allowlisting |
