@@ -199,40 +199,147 @@ function changeTool(){
 function quotePath(v){return shq(validateText(v,'File path'));}
 function generate(){
  const t=tool.value,m=mode.value;let command='',explain='';
+ const q=shq;
  if(t==='ffuf'){
-  const base=get('url'),wordlist=getWordlist(),url=new URL(base);
-  if(!url.pathname.endsWith('/')&&m==='path')url.pathname+='/';
-  if(m==='path')url.pathname+='FUZZ';else url.searchParams.set(get('parameter'),'FUZZ');
-  command='ffuf -w '+shq(wordlist)+' -u '+shq(url.href)+' -t 2 -rate 10 -maxtime 180 -ac';
-  explain='FUZZ is replaced by each wordlist entry; -rate 10 limits request rate; 2 workers and 180 seconds cap the run.';
+  const wordlist=getWordlist(),args=['ffuf','-w',q(wordlist)];
+  if(m==='request'){
+   args.push('-request',quotePath(get('file')),'-request-proto',advValue('protocol'));
+  }else{
+   const url=new URL(get('url'));
+   if(m==='path'){if(!url.pathname.endsWith('/'))url.pathname+='/';url.pathname+='FUZZ';}
+   else url.searchParams.set(get('parameter'),'FUZZ');
+   args.push('-u',q(url.href));
+  }
+  args.push('-t',advValue('threads'),'-rate',advValue('rate'),'-maxtime',advValue('maxTime'),'-timeout',advValue('timeout'),'-ac');
+  const mc=advValue('matchCodes'),fc=advValue('filterCodes'),fs=advValue('filterSize');
+  if(mc)args.push('-mc',q(mc));
+  if(fc)args.push('-fc',q(fc));
+  if(fs!=='')args.push('-fs',fs);
+  if(m==='path'){
+   const ext=advValue('extensions');
+   if(ext)args.push('-e',q(ext));
+   if(advValue('recurse'))args.push('-recursion','-recursion-depth','1');
+  }
+  const header=advValue('header'),proxy=advValue('proxy'),output=advValue('output');
+  if(header)args.push('-H',q(header));
+  if(proxy)args.push('-x',q(proxy));
+  if(advValue('follow'))args.push('-r');
+  if(output)args.push('-o',q(output),'-of',advValue('outputFormat'));
+  command=args.join(' ');
+  explain='Uses FUZZ as the insertion marker; requests are rate-limited and time-capped. '+(m==='request'?'Place FUZZ in the saved Burp request; the generated tool cannot inspect the file.':'Review the generated URL before running.');
  }else if(t==='gobuster'){
-  const wordlist=getWordlist();
-  if(m==='dns')command='gobuster dns -do '+shq(get('host'))+' -w '+shq(wordlist)+' -t 3';
-  else if(m==='vhost')command='gobuster vhost -u '+shq(get('url'))+' --append-domain -w '+shq(wordlist)+' -t 3';
-  else command='gobuster dir -u '+shq(get('url'))+' -w '+shq(wordlist)+' -t 3';
-  explain='Directory, DNS or VHost discovery with only three workers; results require manual verification.';
+  const args=['gobuster',m],wordlist=getWordlist();
+  if(m==='dns')args.push('-do',q(get('host')));
+  else args.push('-u',q(get('url')));
+  args.push('-w',q(wordlist),'-t',advValue('threads'));
+  if(m!=='dns'){
+   args.push('--timeout',advValue('timeout')+'s');
+   if(Number(advValue('delay'))>0)args.push('--delay',advValue('delay')+'ms');
+   const header=advValue('header'),proxy=advValue('proxy');
+   if(header)args.push('-H',q(header));
+   if(proxy)args.push('--proxy',q(proxy));
+  }
+  if(m==='dir'){
+   const ext=advValue('extensions'),status=advValue('statusCodes'),len=advValue('excludeLength');
+   if(ext)args.push('-x',q(ext));
+   if(status)args.push('-s',q(status),'-b',q(''));
+   if(len)args.push('--exclude-length',q(len));
+  }
+  const output=advValue('output');if(output)args.push('-o',q(output));
+  command=args.join(' ');
+  explain='Small wordlist and limited workers. '+(m==='dir'&&advValue('statusCodes')?'Includes -b empty to avoid conflicting with Gobuster default 404 blacklist. ':'')+'Confirm wordlist path and wildcard response behaviour.';
  }else if(t==='sqlmap'){
-  const source=m==='request'?'-r '+quotePath(get('file')):'-u '+shq(get('url'));
-  command='sqlmap '+source+' -p '+shq(get('parameter'))+' --technique='+get('technique')+' --level=1 --risk=1 --threads=1 --delay=0.2 --batch';
-  explain='Narrow one-parameter detection, no database dumps or operating-system shell; adjust only with authorisation.';
+  const args=['sqlmap'];
+  if(m==='request')args.push('-r',quotePath(get('file')));
+  else args.push('-u',q(get('url')));
+  args.push('-p',q(get('parameter')),'--technique='+get('technique'),
+   '--level='+advValue('level'),'--risk='+advValue('risk'),
+   '--threads='+advValue('threads'),'--delay='+advValue('delay'),
+   '--timeout='+advValue('timeout'),'--retries='+advValue('retries'));
+  const dbms=advValue('dbms'),trueText=advValue('matchString'),proxy=advValue('proxy');
+  if(dbms!=='auto')args.push('--dbms='+q(dbms));
+  if(get('technique')==='T')args.push('--time-sec='+advValue('timeSec'));
+  if(trueText)args.push('--string='+q(trueText));
+  if(proxy)args.push('--proxy='+q(proxy));
+  if(advValue('textOnly'))args.push('--text-only');
+  if(advValue('fresh'))args.push('--fresh-queries');
+  if(advValue('batch'))args.push('--batch');
+  command=args.join(' ');
+  explain='Narrow SQLi detection only. No --dump or --os-shell. '+(Number(advValue('risk'))>1?'Risk level 2 can introduce expensive time-based probes; confirm explicit lab permission.':'Risk level 1 uses less aggressive payload classes.');
  }else if(t==='nmap'){
-  const ports=m==='ports'?'-p '+shq(get('ports')):'--top-ports 100';
-  command='nmap -sV --version-light '+ports+' -T2 --open -oN '+shq('lab-nmap.txt')+' '+shq(get('host'));
-  explain='Polite single-host TCP service scan; -oN saves plain-text results.';
+  const args=['nmap',advValue('scanType')==='syn'?'-sS':'-sT'];
+  if(advValue('version'))args.push('-sV','--version-light');
+  if(m==='ports')args.push('-p',q(get('ports')));
+  else args.push('--top-ports','100');
+  args.push('-T'+advValue('timing'));
+  if(advValue('openOnly'))args.push('--open');
+  if(advValue('reason'))args.push('--reason');
+  if(advValue('skipPing'))args.push('-Pn');
+  args.push('--max-retries',advValue('retries'),'--host-timeout',advValue('hostTimeout')+'s');
+  const output=advValue('output');
+  if(output){
+   const kind=advValue('outputKind'),flag=kind==='all'?'-oA':kind==='xml'?'-oX':'-oN';
+   args.push(flag,q(output));
+  }
+  args.push(q(get('host')));
+  command=args.join(' ');
+  explain='Single-host scan with limited ports and retries. '+(advValue('scanType')==='syn'?'SYN scanning generally needs administrator/root privileges.':'TCP connect scan works without raw-socket privileges.');
  }else if(t==='hydra'){
-  command='hydra -l '+shq(get('user'))+' -P '+shq(get('list'))+' -t 1 -c 3 -f -w 5 '+shq(get('host'))+' '+m;
-  explain='One synthetic username, one worker, 3-second pause between login attempts, stop at first success; use a tiny agreed test list.';
+  const args=['hydra','-l',q(get('user')),'-P',q(get('list')),
+    '-t',advValue('threads'),'-c',advValue('delay'),'-w',advValue('wait')];
+  if(advValue('stopFirst'))args.push('-f');
+  const port=advValue('port'),output=advValue('output');
+  if(port)args.push('-s',port);
+  if(m==='ftp'&&advValue('ssl'))args.push('-S');
+  if(output)args.push('-o',q(output));
+  args.push(q(get('host')),m);
+  command=args.join(' ');
+  explain='One synthetic username and a tiny authorised wordlist. Check account-lockout rules. Output files may contain credentials and must be protected.';
  }else if(t==='ssh'){
-  if(m==='local')command='ssh -o ExitOnForwardFailure=yes -N -L '+shq('127.0.0.1:'+get('localPort')+':'+get('remoteHost')+':'+get('remotePort'))+' '+shq(get('ssh'));
-  else if(m==='socks')command='ssh -o ExitOnForwardFailure=yes -N -D '+shq('127.0.0.1:'+get('localPort'))+' '+shq(get('ssh'));
-  else if(m==='jump')command='ssh -J '+shq(get('ssh'))+' '+shq(get('destination'));
-  else command='ssh '+shq(get('ssh'));
-  explain=m==='local'?'Local port listening on 127.0.0.1 forwards to a service reachable from the SSH host.':m==='socks'?'Creates a localhost SOCKS tunnel. Confirm application proxy settings; this does not automatically route all commands.':m==='jump'?'Connects to the destination through the authorised SSH jump host.':'Connects directly to the authorised SSH host.';
+  const args=['ssh'];
+  const destPort=advValue('port'),key=advValue('identity');
+  if(key)args.push('-i',q(key));
+  if(String(destPort)!=='22')args.push('-p',destPort);
+  args.push('-o','ConnectTimeout='+advValue('connect'));
+  if(Number(advValue('alive'))>0)args.push('-o','ServerAliveInterval='+advValue('alive'));
+  if(advValue('verbose'))args.push('-v');
+  if(advValue('compress'))args.push('-C');
+  if(m==='local'){
+   args.push('-o','ExitOnForwardFailure=yes','-N','-L',q('127.0.0.1:'+get('localPort')+':'+get('remoteHost')+':'+get('remotePort')),q(get('ssh')));
+   explain='Local forwarding binds only to your machine. Access to the remote service must be authorised.';
+  }else if(m==='socks'){
+   args.push('-o','ExitOnForwardFailure=yes','-N','-D',q('127.0.0.1:'+get('localPort')),q(get('ssh')));
+   explain='Dynamic forwarding creates a localhost SOCKS proxy; applications must be explicitly configured to use it.';
+  }else if(m==='remote'){
+   args.push('-o','ExitOnForwardFailure=yes','-N','-R',q('127.0.0.1:'+get('remotePort')+':'+get('localHost')+':'+get('localPort')),q(get('ssh')));
+   explain='Remote forwarding binds to the SSH host loopback. The local service must be authorised, and SSH server AllowTcpForwarding must permit it.';
+  }else if(m==='jump'){
+   const jump=get('ssh'),jumpPort=advValue('jumpPort');
+   args.push('-J',q(jump+(jumpPort?':'+jumpPort:'')),q(get('destination')));
+   explain='SSH ProxyJump via an authorised bastion. Destination -p applies to the final SSH connection; jump SSH port can be set separately.';
+  }else{
+   args.push(q(get('ssh')));
+   explain='Direct connection to an authorised SSH host; private key is referenced by path, not copied into the command.';
+  }
+  command=args.join(' ');
  }else if(t==='curl'){
-  const method=m.toUpperCase();
-  command=m==='HEAD'?'curl -sSI '+shq(get('url')):'curl -i -sS -X '+method+' '+(m==='POST'?'-H '+shq('Content-Type: application/json')+' --data '+shq(get('json'))+' ':'')+shq(get('url'));
-  explain='Displays response headers and body where applicable, without automatically sending auth tokens.';
- }else throw Error('Unsupported tool mode.');
+  const method=m.toUpperCase(),args=['curl','-sS','--max-time',advValue('maxTime'),'--connect-timeout',advValue('connectTimeout')];
+  if(method==='HEAD')args.push('-I');
+  else{
+   if(advValue('showHeaders'))args.push('-i');
+   args.push('-X',method);
+  }
+  if(advValue('follow'))args.push('-L');
+  const header=advValue('header'),proxy=advValue('proxy'),output=advValue('output');
+  if(header)args.push('-H',q(header));
+  if(proxy)args.push('-x',q(proxy));
+  if(method==='POST'||method==='PUT'||method==='PATCH')args.push('-H',q('Content-Type: application/json'),'--data',q(get('json')));
+  if(output)args.push('-o',q(output));
+  if(advValue('showCode'))args.push('-w',q('HTTP status: %{http_code}\n'));
+  args.push(q(get('url')));
+  command=args.join(' ');
+  explain='Review HTTP method before copying; POST, PUT, PATCH or DELETE may modify test records. No authentication is added automatically.';
+ }else throw Error('Unsupported tool operation.');
  return {command,explain};
 }
 let last='';
