@@ -149,8 +149,8 @@ function generate(){
   command='nmap -sV --version-light '+ports+' -T2 --open -oN '+shq('lab-nmap.txt')+' '+shq(get('host'));
   explain='Polite single-host TCP service scan; -oN saves plain-text results.';
  }else if(t==='hydra'){
-  command='hydra -l '+shq(get('user'))+' -P '+shq(get('list'))+' -t 1 -f -w 5 '+shq(get('host'))+' '+m;
-  explain='One test username, one worker, stop at first success; use only a tiny authorised credential list.';
+  command='hydra -l '+shq(get('user'))+' -P '+shq(get('list'))+' -t 1 -c 3 -f -w 5 '+shq(get('host'))+' '+m;
+  explain='One synthetic username, one worker, 3-second pause between login attempts, stop at first success; use a tiny agreed test list.';
  }else if(t==='ssh'){
   if(m==='local')command='ssh -o ExitOnForwardFailure=yes -N -L '+shq('127.0.0.1:'+get('localPort')+':'+get('remoteHost')+':'+get('remotePort'))+' '+shq(get('ssh'));
   else if(m==='socks')command='ssh -o ExitOnForwardFailure=yes -N -D '+shq('127.0.0.1:'+get('localPort'))+' '+shq(get('ssh'));
@@ -159,7 +159,7 @@ function generate(){
   explain=m==='local'?'Local port listening on 127.0.0.1 forwards to a service reachable from the SSH host.':m==='socks'?'Creates a localhost SOCKS tunnel. Confirm application proxy settings; this does not automatically route all commands.':m==='jump'?'Connects to the destination through the authorised SSH jump host.':'Connects directly to the authorised SSH host.';
  }else if(t==='curl'){
   const method=m.toUpperCase();
-  command='curl -i -sS -X '+method+' '+(m==='POST'?'-H '+shq('Content-Type: application/json')+' --data '+shq(get('json'))+' ':'')+shq(get('url'));
+  command=m==='HEAD'?'curl -sSI '+shq(get('url')):'curl -i -sS -X '+method+' '+(m==='POST'?'-H '+shq('Content-Type: application/json')+' --data '+shq(get('json'))+' ':'')+shq(get('url'));
   explain='Displays response headers and body where applicable, without automatically sending auth tokens.';
  }else throw Error('Unsupported tool mode.');
  return {command,explain};
