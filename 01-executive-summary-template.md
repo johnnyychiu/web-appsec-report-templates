@@ -9,7 +9,9 @@
 1. [Which output does the test ask for?](#which-output-does-the-test-ask-for)
 2. [Fill these eight facts first](#fill-these-eight-facts-first)
 3. [Universal 100–150-word template](#universal-100150-word-template)
-4. [One-finding / uncertain-impact alternatives](#one-finding--uncertain-impact-alternatives)
+4. [How to cover fixes for all findings](#how-to-cover-fixes-for-all-findings)
+5. [Three-finding example: Stored XSS + CSRF + Verbose Errors](#three-finding-example-stored-xss--csrf--verbose-errors)
+6. [One-finding / uncertain-impact alternatives](#one-finding--uncertain-impact-alternatives)
 5. [Quick impact and remediation lookup](#quick-impact-and-remediation-lookup)
 6. [Complete worked answers by vulnerability](#complete-worked-answers-by-vulnerability)
 7. [Five-minute final review](#five-minute-final-review)
@@ -36,7 +38,7 @@
 | 5 | **Business consequence** | Specific exposure, unauthorised transaction, account misuse, disruption |
 | 6 | **Risk justification** | Impact + ease/prerequisites + controls + evidence uncertainty |
 | 7 | **Interim control** | Narrowest feasible mitigation, subject to operational review |
-| 8 | **Permanent fix + retest** | Root-cause control and evidence required to close the finding |
+| 8 | **Permanent fix + retest** | Root-cause control for the main finding; **short fixes for each other finding**; retesting expectations |
 
 **Critical rule:** "Testing confirmed..." describes tested behaviour. "Could result in..." describes an unproven consequence. **A test-only £2,000 refund is not a real loss.** Publicly accessible does not equal unauthenticated exploitation; an account prerequisite does not automatically make the risk Medium.
 
@@ -52,9 +54,36 @@
 
 **Paragraph 3 — Decision / action**
 
-> We recommend prioritising **[MAIN FINDING]** **[BASED ON EVIDENCE AND RISK]**. As an interim measure, **[NARROW MITIGATION]** should be considered after assessing its operational effect. The permanent fix should involve **[ROOT CAUSE]**, followed by retesting. The remaining findings should be addressed according to their assessed risk.
+> We recommend prioritising **[MAIN FINDING]** **[BASED ON EVIDENCE AND RISK]**. As an interim measure, **[NARROW MITIGATION]** should be considered after assessing its operational effect. The permanent fix should involve **[MAIN ROOT-CAUSE FIX]**, followed by retesting. For the other findings, **[FIX B]** and **[FIX C]** should be implemented according to their assessed risk.
 
 **Use:** Replace every bracketed field, remove unsupported claims, and count the final words. If there are fewer than three findings, adapt the first and final sentence; never invent findings to fill slots.
+
+
+## How to cover fixes for all findings
+
+**Yes — the Executive Summary normally names every finding, but it does NOT need an individual full remediation paragraph for each one.** When the task asks for recommendations for *all* findings, use **one concise closing sentence** for the remaining issues. Do not finish only with “address according to risk” if you know their specific fixes.
+
+**Three findings / 100–150 words:**
+
+1. **Paragraph 1:** All three finding names and (if justified) severity ratings.
+2. **Paragraph 2:** Confirmed behaviour and prerequisites of the primary risk. Mention a second confirmed business consequence if space and significance justify it.
+3. **Paragraph 3:** Main finding's temporary mitigation, root-cause fix and retest; add **one short sentence** naming a fix for Finding B and a fix for Finding C.
+
+**Copy-and-fill closing sentence:**
+
+> “For **[FINDING B]**, implement **[CONTROL B]**; for **[FINDING C]**, implement **[CONTROL C]**, prioritised according to risk.”
+
+**Use judgment:** In a 100–150-word summary, it is fine to say “implement anti-CSRF protection and reduce verbose error detail” without explaining the entire CSRF verification flow or server-side logging configuration. Put full reproduction, evidence, remediation and retest in **[Template B](02-detailed-finding-template.md)**. If the written task explicitly asks **only** for top risks, prioritise clarity and follow its instructions.
+
+## Three-finding example: Stored XSS + CSRF + Verbose Errors
+
+**Fictional assessment facts:** Internet-facing support portal and REST API. Customer-submitted ticket JavaScript executed in a Support Agent's browser (no data theft demonstrated); a cross-origin form changed an authenticated customer's delivery address; malformed API requests revealed framework stack traces but no secrets. Ratings are illustrative: Stored XSS High (provisional), CSRF Medium, errors Low.
+
+The authorised assessment of the internet-facing support portal and REST API identified stored cross-site scripting (High, provisional), cross-site request forgery (Medium), and verbose error messages (Low).
+
+Testing confirmed that a customer could store a script in a ticket that executed when an agent opened it. Exploitation requires a customer account and staff interaction; no data theft was demonstrated. Separately, a cross-origin form changed a logged-in customer's delivery address. Detailed errors disclosed framework information but no secrets.
+
+Prioritise XSS by temporarily displaying ticket content as plain text where operationally feasible, then implementing context-appropriate output encoding and safe rendering, followed by retesting. Implement effective CSRF protection for address changes and retest the cross-origin workflow. Replace detailed error responses with generic client messages while retaining diagnostics in server-side logs.
 
 ## One-finding / uncertain-impact alternatives
 
@@ -101,7 +130,7 @@ The penetration test of the internet-facing customer portal and associated APIs 
 
 Testing confirmed that an authenticated customer could retrieve another customer's name, email address and postal address without authorisation. Exploitation requires a valid customer account, but no elevated privileges were needed. This could expose personal information and lead to privacy concerns and regulatory scrutiny. The potential scale of exposure and any malicious exploitation remain unconfirmed.
 
-We recommend prioritising server-side object-level authorisation checks and retesting the affected endpoints. Pending remediation, consider restricting the affected data-retrieval functionality after reviewing operational impact. Address the other findings through a risk-based plan.
+We recommend prioritising server-side object-level authorisation checks and retesting the affected endpoints. Pending remediation, consider restricting the affected data-retrieval functionality after reviewing operational impact. For the other issues, strengthen OTP attempt limits and assess the library for a supported update.
 
 <a id="case-bfla"></a>
 
@@ -113,7 +142,7 @@ The assessment of the e-commerce platform and its APIs identified broken functio
 
 In a controlled test, a Customer Service account approved a £2,000 refund and changed its status from pending to approved without Finance Manager authorisation. Valid Customer Service credentials were required, but no additional role privileges were needed. If this behaviour were exploited in production, unauthorised refunds could result in financial loss and weaken internal financial controls. No real payment or malicious exploitation was demonstrated.
 
-Prioritise server-side role-based checks on the approval endpoint and verify the fix through retesting. Until then, restrict API approval to a reliably enforced authorised workflow or disable that action while retaining a reviewed manual approval route.
+Prioritise server-side role-based checks on the approval endpoint and verify the fix through retesting. Until then, restrict API approval to an authorised workflow or use a reviewed manual approval route. Add OTP attempt limits and update the library.
 
 <a id="case-sqli"></a>
 
@@ -125,7 +154,7 @@ The penetration test of the reporting application and API identified a suspected
 
 Controlled input changes produced consistent database error behaviour and different outcomes for two complementary test conditions, supporting the presence of injection. Exploitation required an authenticated reporting account; the assessment did not extract data or demonstrate modification of records. Potential consequences include unauthorised database queries, but the extent of accessible data remains unknown. The risk is provisionally High pending safe confirmation of impact and database permissions.
 
-We recommend implementing parameterised database access and reviewing dynamic query construction. Restrict access to the affected reporting function if a safe interim control is available, then retest both malicious and legitimate inputs.
+Implement parameterised queries and review query construction. Restrict reporting access temporarily if feasible, then retest malicious and legitimate inputs. Strengthen login rate limiting and review the outdated dependency.
 
 <a id="case-stored-xss"></a>
 
@@ -137,7 +166,7 @@ The assessment of the support-ticket application identified stored cross-site sc
 
 Testing confirmed that a harmless script marker submitted through a customer ticket executed when a support user viewed that ticket. Exploitation requires the content to be stored and opened by another user. This could permit unauthorised actions within the victim's browser, depending on its session privileges and other protections. The assessment did not demonstrate credential theft, privilege escalation or compromise outside the test accounts. The rating should be reviewed against the actual viewing audience and controls.
 
-Prioritise context-appropriate output encoding and safe HTML rendering. Consider limiting rich content until the fix is deployed, review Content Security Policy as defence in depth, and retest ticket submission and display.
+Prioritise context-appropriate output encoding and safe rendering. Limit rich ticket content temporarily if feasible, then retest. Review missing security headers and upgrade the outdated library.
 
 <a id="case-ssrf"></a>
 
@@ -149,7 +178,7 @@ The test of the URL-preview feature and associated API identified a server-side 
 
 With a valid user account, testing induced the preview service to contact an internal test endpoint outside its intended destination policy. This demonstrates unexpected server-side network access, but not exposure of internal credentials or sensitive information. Depending on reachable systems, an attacker might use this path to interact with internal services. The potential impact and overall severity remain conditional on network segmentation and service permissions.
 
-We recommend restricting outbound destinations with a deny-by-default policy, revalidating redirects and resolved addresses, and retesting. Temporarily limit the preview feature if the restriction cannot be enforced reliably; review operational impact first.
+We recommend restricting outbound destinations with a deny-by-default policy, revalidating redirects and resolved addresses, and retesting. Temporarily limit the preview feature if necessary after reviewing operational impact. Enforce OTP attempt limits and review the outdated library.
 
 <a id="case-session"></a>
 
@@ -161,7 +190,7 @@ The penetration test of the customer portal and REST API identified continued to
 
 Testing confirmed that a token issued before logout continued to authorise API requests for 30 minutes afterwards. An attacker would first need to obtain a valid token; the assessment found no evidence of token theft or account compromise. If a token were stolen or otherwise exposed, this behaviour could allow continued account access after the user logs out. The appropriate severity depends on token lifetime, sensitive actions and other safeguards.
 
-We recommend reliable server-side session or token invalidation, with retesting of both API and browser logout. Shorter token lifetimes may reduce exposure temporarily but do not replace proper invalidation.
+We recommend reliable server-side session or token invalidation, with retesting of both API and browser logout. Shorter lifetimes may temporarily reduce exposure but cannot replace invalidation. Also strengthen login rate limits and review the missing security headers.
 
 <a id="case-otp"></a>
 
@@ -173,7 +202,7 @@ The assessment of the consumer application's password-reset flow identified insu
 
 The test account's reset endpoint processed 50 consecutive incorrect OTP submissions without a cooldown or account-level lockout. No correct OTP was guessed and no unauthorised account reset was demonstrated. Exploitation would additionally depend on OTP entropy, expiry, valid reset state, and any controls applied across sessions or IP addresses. If those controls are weak, repeated attempts could increase the chance of account compromise.
 
-We recommend applying server-side attempt limits per reset transaction and account, sensible expiry and monitoring, then retesting legitimate and abusive flows. Review the dependency and header observations in the normal remediation backlog.
+We recommend applying server-side attempt limits per reset transaction and account, sensible expiry and monitoring, then retesting legitimate and abusive flows. Assess and update the outdated dependency, and implement appropriate security headers according to risk.
 
 <a id="case-mass-assignment"></a>
 
@@ -185,7 +214,7 @@ The test of the subscription application's account API identified a mass-assignm
 
 Testing confirmed that an authenticated trial user could include an undocumented property in a profile update and change their entitlement to a premium plan. This required a standard customer account and did not demonstrate access to other customers' information. If the behaviour were reproducible in production, it could enable unauthorised use of paid features and undermine billing controls. No production billing effect or financial loss was demonstrated.
 
-We recommend accepting only explicitly permitted fields and enforcing entitlement changes in a dedicated server-side business workflow. Consider disabling direct changes to affected fields temporarily, and retest normal profile updates and privilege boundaries.
+We recommend accepting only explicitly permitted fields and enforcing entitlement changes in a dedicated server-side business workflow. Temporarily restrict direct changes to protected fields, then retest profile updates and privileges. Also strengthen login rate limiting and update the library.
 
 <a id="case-csrf"></a>
 
@@ -197,7 +226,7 @@ The assessment of the account-management portal identified a cross-site request 
 
 In a controlled browser test, a request initiated from a separate test origin changed the signed-in test user's notification email without an additional authorisation check. Exploitation would require the victim to remain authenticated and visit attacker-controlled content. This could redirect account notifications and contribute to further abuse, although no account takeover or sensitive data disclosure was demonstrated. The overall severity depends on the role of that email address and existing confirmation controls.
 
-We recommend anti-CSRF protection and appropriate SameSite cookie settings, with server-side confirmation for sensitive changes. Retest both legitimate profile updates and cross-origin submissions.
+We recommend anti-CSRF protection and appropriate SameSite cookie settings, with server-side confirmation for sensitive changes. Retest legitimate and cross-origin submissions. Assess and update the outdated dependency, and add appropriate security headers.
 
 <a id="case-upload"></a>
 
@@ -209,7 +238,7 @@ The penetration test of the ticketing application identified unsafe handling of 
 
 Testing confirmed that an authenticated customer could upload an HTML file and have it rendered as active content under the application's origin when a staff member opened the attachment. This could expose staff browser sessions to malicious content, depending on browser isolation and session protections. The assessment did not demonstrate server-side code execution, credential theft or broader compromise. A valid customer account and staff interaction were necessary in the tested workflow.
 
-We recommend restricting permitted file types, storing untrusted uploads outside the application's origin, and serving downloads with safe content handling. Retest uploads, downloads and normal staff workflows.
+We recommend restricting permitted file types, storing untrusted uploads outside the application's origin, and serving downloads with safe content handling. Retest uploads, downloads and staff workflows. Update the outdated library and implement appropriate security headers.
 
 <a id="case-cors"></a>
 
@@ -221,7 +250,7 @@ The assessment of the customer portal API identified a credentialed CORS misconf
 
 In a controlled browser test, JavaScript running on a separate test origin successfully read the signed-in test customer's profile response using existing browser credentials. Exploitation would require a customer to be authenticated and visit a malicious origin; no real user data was accessed. Depending on which endpoints share this policy, the weakness could expose personal information to an unauthorised website. The full scope of accessible data was not established.
 
-We recommend replacing dynamic origin reflection with an explicit allowlist, reviewing credential handling and retesting cross-origin access. Restrict affected API responses temporarily if reliable enforcement can be applied without disrupting customers.
+We recommend replacing dynamic origin reflection with an explicit allowlist, reviewing credential handling and retesting cross-origin access. Restrict affected API responses temporarily where feasible. Also update the library and implement appropriate security headers.
 
 <a id="case-dependency"></a>
 
@@ -233,7 +262,7 @@ The security review of the client portal identified an outdated JavaScript depen
 
 The installed library version was identified from the application bundle and is no longer maintained. However, no applicable vulnerability was validated in the way the application uses the component. The business risk is therefore uncertain: unsupported software may increase exposure to future or existing security issues, but the test does not establish data compromise or service disruption. Priority should follow a review of known advisories and actual usage.
 
-We recommend identifying the supported replacement version, testing compatibility and planning a controlled update. Confirm the deployed version and relevant security fixes during retesting, while addressing the other observations through the maintenance backlog.
+We recommend identifying the supported replacement version, testing compatibility and planning a controlled update. Confirm the deployed version and fixes during retesting. Implement appropriate security headers and reduce non-sensitive error detail.
 
 ## Five-minute final review
 
