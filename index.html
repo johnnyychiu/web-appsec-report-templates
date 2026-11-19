@@ -122,14 +122,16 @@ const MODEL_ALT={"bola":["Testing confirmed that a normal customer account could
 
 const EXAM_MODEL_CHOICES=Object.fromEntries(TYPE_KEYS.map(function(key){
  const c=CATALOG[key],variants=MODEL_ALT[key];
- const sent=function(s){let v=String(s||'').trim().replace(/^e\.g\.\s*/i,'');return v.charAt(0).toUpperCase()+v.slice(1).replace(/$/,function(){return /[.!?]$/.test(v)?'':'.';});};
+ const sent=function(s){let v=String(s||'').trim().replace(/^e\.g\.\s*/i,'');v=v.charAt(0).toUpperCase()+v.slice(1);return /[.!?]$/.test(v)?v:v+'.';};
  const normal=function(s){let v=String(s||'').trim().replace(/^e\.g\.\s*/i,'');v=v.charAt(0).toLowerCase()+v.slice(1);return v;};
- let pre=key==='dependency'?'A practical exploit requires a vulnerable code path in the deployed application.':sent('Exploitation requires '+normal(c.prereq));
+ let core=normal(c.prereq).replace(/^ability to /,'the ability to ');
+ let pre=key==='dependency'?'A practical exploit requires a vulnerable code path in the deployed application.':sent('Exploitation requires '+core);
+ let preAlt=key==='dependency'?'An attacker would first need a reachable vulnerable library function and a way to exercise it.':sent('An attacker would need '+core);
  return [key,{
   evidence:[sent(c.hint),variants[0]],
-  prerequisite:[pre,sent('An attacker would need '+normal(c.prereq))],
+  prerequisite:[pre,preAlt],
   business:[sent('If exploited, this could result in '+c.impact),variants[1]],
-  ratingWhy:[sent('The severity should reflect the demonstrated impact on '+c.area+' and the effectiveness of existing controls'),variants[2]],
+  ratingWhy:[sent('The severity of '+c.name+' depends on the demonstrated impact, exploitability and existing controls'),variants[2]],
   limitations:['Broader exploitation outside the controlled test was not established.',variants[3]]
  }];
 }));
