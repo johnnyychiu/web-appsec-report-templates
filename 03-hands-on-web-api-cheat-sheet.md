@@ -3,6 +3,14 @@
 > **Use case:** Open-book, timed **authorised** Web/API hands-on assessments (for example, your own TryHackMe lab). Optimised for **Burp Suite Community + Repeater**, then `curl` / `jq` / `ffuf` / `sqlmap` if permitted.  
 > **Everything below is illustrative.** `lab.example.test`, user IDs, refunds and callback addresses are **fictional**. Use only approved targets, accounts and test records. Never publish live tokens, passwords, private client endpoints, personal records or unredacted screenshots.
 
+## Quick interactive helpers
+
+- [Payload Library](payload-library.html) — pick an XSS, SQLi, Traversal or SSTI probe by context and copy it.
+- [Command Builder](command-builder.html) — choose ffuf, Gobuster, sqlmap, Nmap, Hydra, SSH Pivot or curl and generate a conservative ready-to-copy command.
+- [CSRF Lab Helper](csrf-helper.html) — paste a Burp request to get a manually triggered GET link or POST form.
+
+**Use only authorised targets and test records.** Generated strings and commands are illustrative; review each one before using it.
+
 ## START HERE — 60-second triage
 
 **Memorise only this loop:**
