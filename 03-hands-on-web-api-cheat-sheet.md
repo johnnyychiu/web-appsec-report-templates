@@ -399,6 +399,8 @@ Content-Type: application/json
 
 ### 9. CSRF — browser confirmation
 
+**Quick helper:** [CSRF Lab Helper — paste a Burp request and generate a clickable form or link](csrf-helper.html). Use it only on authorised test accounts and validate real browser cookies and state changes. It supports native GET and form-encoded POST; JSON/PATCH and custom Authorization headers are not directly reproducible.
+
 **Use when:** browser sessions use cookies and a state-changing action may lack CSRF protection.
 
 1. Capture a **benign** account update (for example, display name).
