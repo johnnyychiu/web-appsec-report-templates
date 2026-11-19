@@ -2,6 +2,14 @@
 
 Practical, **copy-and-fill** Markdown templates and hands-on command references for authorised Web/API penetration testing and timed written assessments. Examples use **fictional systems and synthetic test evidence**, with concise British English suitable for a client-facing report.
 
+## Interactive report builder (new)
+
+**[Open the report builder (index.html)](index.html)** to choose a Web/API vulnerability and automatically fill **interim mitigation**, **permanent remediation**, **business-impact wording** and **retesting guidance**. Add up to five findings and generate a draft **Executive Summary** or **Detailed Finding**, then copy or download Markdown.
+
+**Publish as a GitHub Pages website:** This repository contains a ready-to-run static `index.html`. If GitHub Pages is not enabled, go to **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: main → Folder: /(root) → Save**. GitHub will display the published site URL under Pages. Suggested project-site address after activation: `https://johnnyychiu.github.io/web-appsec-report-templates/` (verify Pages has deployed before sharing).
+
+The builder runs entirely in your browser; it does not transmit or store finding contents. It deliberately leaves confirmed evidence blank until you supply it. **Do not enter live client secrets or production personal data.**
+
 ## Open a template
 
 | Written-test task | Document | Includes |
