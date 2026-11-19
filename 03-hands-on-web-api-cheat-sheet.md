@@ -95,7 +95,7 @@ Screenshots are evidence, not the finding itself. A screenshot must show **what 
 
 ## TEST RECIPES — choose one feature, then follow the steps
 
-### 1. BOLA / IDOR — cross-account record access
+### 1. BOLA / IDOR: cross-account record access
 
 **Use when:** API reads an object using `id` / `orderId` / `customerId`.
 
