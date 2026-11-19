@@ -4,11 +4,17 @@ Practical, **copy-and-fill** Markdown templates and hands-on command references 
 
 ## Interactive report builder (new)
 
-**[Open the report builder (index.html)](index.html)** to choose from **25 Web/API vulnerability types** (including SSTI) and automatically fill **interim mitigation**, **permanent remediation**, **conditional technical impact** and **retesting guidance**. Add up to five findings and generate a draft **Executive Summary** or **Detailed Finding**, then copy or download Markdown. **Business impact, likelihood, existing controls and severity justification are separate fields that require your own evidence**; the site never automatically assigns a severity.
+**[Open the report builder (index.html)](index.html)** to choose from **25 Web/API vulnerability types** (including SSTI) and automatically fill **interim mitigation**, **permanent remediation**, **conditional technical impact** and **retesting guidance**. Add up to five findings and generate a draft **Summary of Findings table**, **Executive Summary** or **Detailed Finding**, then copy or download Markdown. **Business impact, likelihood, existing controls and severity justification are separate fields that require your own evidence**; the site never automatically assigns a severity.
 
 **Publish as a GitHub Pages website:** This repository contains a ready-to-run static `index.html`. If GitHub Pages is not enabled, go to **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: main → Folder: /(root) → Save**. GitHub will display the published site URL under Pages. Suggested project-site address after activation: `https://johnnyychiu.github.io/web-appsec-report-templates/` (verify Pages has deployed before sharing).
 
 The builder runs entirely in your browser; it does not transmit or store finding contents. It deliberately leaves confirmed evidence blank until you supply it. **Do not enter live client secrets or production personal data.**
+
+## CSRF Lab Helper — browser proof-of-concept generator
+
+**[Open CSRF Lab Helper](csrf-helper.html)** for a 5–8-minute authorised CSRF check. This separate page includes Cantonese notes, a Burp raw-request parser, and a **manually triggered GET link or application/x-www-form-urlencoded POST form**. Paste a request, review the target URL and authentication conditions, then explicitly enable the live trigger to open the request in a signed-in test browser. You can also **copy or download a standalone csrf-poc.html**.
+
+The helper **does not automatically submit** anything or transmit pasted requests for processing. It omits Cookie, Authorization and detected CSRF/sensitive form or URL parameters. A browser decides whether to include session cookies according to SameSite and other policies. **JSON, XML, multipart, PATCH, PUT and DELETE cannot be reproduced exactly by this basic HTML-form tool**; unsupported requests are flagged, not represented as successful CSRF tests. Check actual HTTP requests in Burp **and verify that the intended test account state changed** before reporting a confirmed finding.
 
 ## Quick start for a 30-minute written test
 
