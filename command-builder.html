@@ -14,7 +14,7 @@ main{max-width:1200px;margin:auto;padding:24px 25px 52px}.hero{background:linear
 <header class="top"><div class="top-inner"><a class="brand" href="index.html">⌁ Web AppSec <span>Command Builder</span></a><nav><a href="index.html">Report Builder</a><a href="payload-library.html">Payload Library</a><a href="csrf-helper.html">CSRF Helper</a><a href="https://github.com/johnnyychiu/web-appsec-report-templates">GitHub</a></nav></div></header>
 <main><section class="hero"><div class="eyebrow">Copy-ready · Authorised lab</div><h1>Pick a tool. Enter the minimum. Copy the command.</h1><p>ffuf、Gobuster、sqlmap、Nmap、Hydra、SSH Pivot 同 curl。只會喺你嘅 Browser 生成 Bash Command，<strong>唔會自動執行</strong>；預設使用較保守掃描設定。命令會附埋用途、限制同官方文件連結。</p></section>
 <div class="workspace">
-<section class="panel"><h2>1 · Choose tool and mode</h2><div class="field"><label for="tool">Tool</label><select id="tool"></select></div><div class="field"><label for="mode">Operation</label><select id="mode"></select></div><p id="description" class="lead"></p><div id="fields"></div><details id="advanced" class="advanced"><summary><span>Advanced flags</span><span id="advancedCount" class="adv-count">Optional controls</span></summary><p class="lead">Only expand when needed. Tool-specific flags explain their effect and update the command instantly.</p><div id="advancedFields" class="advanced-fields"></div><div class="actions"><button type="button" class="btn" id="resetAdvanced">Reset advanced flags for this mode</button></div></details><div id="scopeNote" class="note">Only run copied commands against systems and accounts expressly included in your lab scope.</div></section>
+<section class="panel"><h2>1 · Quick setup</h2><p class="lead">Choose the tool and operation. Fill only essential fields; expand Advanced flags when required.</p><div class="field"><label for="tool">Tool</label><select id="tool"></select></div><div class="field"><label for="mode">Operation</label><select id="mode"></select></div><p id="description" class="lead"></p><div id="fields"></div><details id="advanced" class="advanced"><summary><span>Advanced flags</span><span id="advancedCount" class="adv-count">Optional controls</span></summary><p class="lead">Only expand when needed. Tool-specific flags explain their effect and update the command instantly.</p><div id="advancedFields" class="advanced-fields"></div><div class="actions"><button type="button" class="btn" id="resetAdvanced">Reset advanced flags for this mode</button></div></details><div id="scopeNote" class="note">Run commands only against authorised systems. Custom headers appear in terminal history; avoid entering real tokens or passwords.</div></section>
 <section class="panel"><h2>2 · Copy the ready command</h2><p class="lead">Edits update the command instantly. Paste the result into the authorised lab laptop's terminal after reviewing the target.</p><div class="pill">Bash / Kali Linux syntax</div><div id="command" class="console" aria-live="polite"></div><div class="actions"><button class="btn primary" id="copy" type="button">Copy command</button><button class="btn" id="copyExplain" type="button">Copy checklist</button></div><p id="feedback" class="status" role="status"></p><div class="hintpanel"><b>Command explanation</b><div id="explanation"></div></div><h3>Lab reminders</h3><div id="tips"></div><div class="actions docs"><a id="docs" href="#" target="_blank" rel="noopener">Official tool documentation</a></div></section>
 </div>
 <section class="panel tips"><h2>Quick reference · Avoid common mistakes</h2><div class="tipgrid">
@@ -94,8 +94,9 @@ function advInput(def){
 function renderAdvanced(){
  const def=advDefs(),root=$('advancedFields');root.textContent='';
  def.forEach(x=>root.appendChild(advInput(x)));
- $('advancedCount').textContent=def.length+' options · optional';
+ updateAdvancedCount();
 }
+function updateAdvancedCount(){const items=advDefs(),changed=items.filter(d=>String(advRaw(d))!==String(d[3])).length;$('advancedCount').textContent=changed+' changed · '+items.length+' available';}
 function resetAdvanced(){
  advDefs().forEach(d=>delete advValues[advKey(d[0])]);
  renderAdvanced();renderCommand();
@@ -335,7 +336,7 @@ function generate(){
   if(proxy)args.push('-x',q(proxy));
   if(method==='POST'||method==='PUT'||method==='PATCH')args.push('-H',q('Content-Type: application/json'),'--data',q(get('json')));
   if(output)args.push('-o',q(output));
-  if(advValue('showCode'))args.push('-w',q('HTTP status: %{http_code}\n'));
+  if(advValue('showCode'))args.push('-w',q('HTTP status: %{http_code}\\n'));
   args.push(q(get('url')));
   command=args.join(' ');
   explain='Review HTTP method before copying; POST, PUT, PATCH or DELETE may modify test records. No authentication is added automatically.';
@@ -344,6 +345,7 @@ function generate(){
 }
 let last='';
 function renderCommand(){
+ updateAdvancedCount();
  const group=$('customGroup');if(group){group.hidden=!(defs().some(d=>d[0]==='words')&&fieldValue(defs().find(d=>d[0]==='words'))==='custom');}
  $('tips').textContent='';currentConfig().tips.forEach(t=>{const p=make('p','• '+t);p.className='mini';$('tips').appendChild(p);});
  try{const x=generate();last=x.command;$('command').textContent=x.command;$('explanation').textContent=x.explain;$('copy').disabled=false;$('copyExplain').disabled=false;$('feedback').textContent='Command ready — review the target before running.';}
