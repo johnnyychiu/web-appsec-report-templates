@@ -23,6 +23,11 @@
 | `Access-Control-Allow-Origin` headers | [CORS](#10-cors--browser-verified-risk) |
 | File uploads, avatars, attachments | [File upload](#11-file-upload--type-validation) |
 | Download/export with `file` or `path` parameter | [Path traversal](#12-path-traversal--test-marker) |
+| Server-side template fields, emails, dynamic previews | [SSTI check](#additional-hands-on-decision-cards) |
+| Server-side utilities / diagnostic fields | [Command injection](#additional-hands-on-decision-cards) |
+| XML importer or SOAP-style API | [XXE / XML parser](#additional-hands-on-decision-cards) |
+| Concurrent coupons, refunds, stock or balances | [Race conditions](#additional-hands-on-decision-cards) |
+| OAuth sign-in callback / JWT session | [OAuth / JWT](#additional-hands-on-decision-cards) |
 
 **Stop condition:** if you cannot establish the real result with allowed test data, record `not confirmed`. HTTP `200`, `500`, a reflected string, or a DNS callback *alone* is not always proof of a security impact.
 
@@ -490,6 +495,26 @@ Run this command, paste your **lab-only JWT** into standard input, then send EOF
 
 ---
 
+## Additional hands-on decision cards
+
+These complement the 14 detailed recipes and the [interactive report builder](index.html). Use **test-owned data and non-destructive probes only**; the purpose is to establish facts for reporting, not to produce a high-impact exploit.
+
+| Vulnerability | Quick low-impact check | What counts as evidence (and what does **not**) | Suggested fix |
+| --- | --- | --- | --- |
+| **SSTI** | In a known server-template lab field, compare literal text with a benign expression such as \`{{7*7}}\` for engines where that syntax applies | Evidence of **server-side template evaluation**, not automatic RCE; output \`49\` may also have other explanations | Fixed trusted templates; pass input as data; avoid dynamic template compilation |
+| **OS command injection** | Review an in-scope utility wrapper and compare harmless test input with normal output | Verify a controlled command-interpretation effect; errors alone do not prove execution | No shell for untrusted data; safe APIs and least privilege |
+| **XXE** | Submit synthetic XML with a controlled lab entity/reference if allowed | Parser unexpectedly resolves the entity; do not infer private-file disclosure | Secure XML parser configuration; disable DTDs/external entities |
+| **Insecure deserialisation** | Try a benign unexpected type/property in an authorised serialised message | Unsafe type/side effect actually instantiated; mere decoding is not exploitation | Safer data formats, strict schema/type allowlisting |
+| **JWT validation** | Decode header and payload, then send an invalid lab token | Protected API actually accepts invalid token; editing JSON alone proves nothing | Verify signature, algorithm, issuer, audience and expiry |
+| **OAuth / OIDC** | Trace normal callback, state/nonce/PKCE in a lab login | Demonstrate incorrect callback/token binding in practice | Exact redirect matching, state/nonce/PKCE and token validation |
+| **Open redirect** | Change a return URL to a harmless controlled destination | Browser actually redirects outside the intended origin; not proof of phishing | Restrict redirects to trusted destinations |
+| **Race condition** | Submit a small allowed set of concurrent requests to a test-only operation | Final state violates a business invariant; multiple 200s alone are not enough | Atomic operations, locking, idempotency checks |
+| **Business logic** | Change synthetic price/discount/refund workflow as allowed | A protected business rule is bypassed and state persists | Recalculate and enforce rules server-side |
+| **Reflected/DOM XSS** | Trace controlled marker from URL/source to DOM sink in lab | Benign JavaScript actually executes in browser; reflection alone is insufficient | Contextual encoding and safe DOM APIs |
+| **NoSQL injection** | Compare benign typed query inputs on test records | Query semantics change unexpectedly; generic errors are insufficient | Typed schemas and server-built safe queries |
+
+**Reporting tip:** Record prerequisites and any protective controls. Technical exploitability is not the same as exploitation likelihood, and neither automatically sets a High severity. Use the [Detailed Finding template](02-detailed-finding-template.md) for evidence and the [Summary template](01-executive-summary-template.md) for business impact.
+
 ## What if the test fails? 2-minute troubleshooting
 
 | You see | Check next |
@@ -530,5 +555,6 @@ Run this command, paste your **lab-only JWT** into standard input, then send EOF
 - [SecLists — web-content wordlists](https://github.com/danielmiessler/SecLists/tree/master/Discovery/Web-Content)
 - [ffuf — performance / rate controls](https://github.com/ffuf/ffuf/wiki/Performance-and-rate)
 - [OWASP Web Security Testing Guide](https://owasp.org/www-project-web-security-testing-guide/)
+- [OWASP Web Security Testing Guide — Testing for Server-Side Template Injection](https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/07-Input_Validation_Testing/18-Testing_for_Server_Side_Template_Injection)
 
 **Reminder:** This is an assessment aid, not a recipe to run every probe against every site. Respect the actual engagement scope, rules of engagement, test accounts, request-rate limits and permitted evidence handling.
