@@ -168,7 +168,7 @@ A matching vhost header may not mean the DNS name resolves or that it belongs to
 
 **False-positive check:** first send a random path like `/unlikely-test-5482`. If the app returns `200` for everything, compare **body size/content**, redirects and actual functionality rather than treating every `200` as a discovery. Review a small number of findings manually in Burp Repeater.
 
-### One safe evidence worksheet (copy after each tested issue)
+## One safe evidence worksheet (copy after each tested issue)
 
 ```text
 Finding: [title] | Candidate severity: [rating / unconfirmed]
