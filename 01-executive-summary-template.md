@@ -11,11 +11,11 @@
 3. [Universal 100–150-word template](#universal-100150-word-template)
 4. [Impact vs Likelihood: How to justify the rating](#impact-vs-likelihood-how-to-justify-the-rating)
 5. [How to cover fixes for all findings](#how-to-cover-fixes-for-all-findings)
-5. [Three-finding example: Stored XSS + CSRF + Verbose Errors](#three-finding-example-stored-xss--csrf--verbose-errors)
-6. [One-finding / uncertain-impact alternatives](#one-finding--uncertain-impact-alternatives)
-5. [Quick impact and remediation lookup](#quick-impact-and-remediation-lookup)
-6. [Complete worked answers by vulnerability](#complete-worked-answers-by-vulnerability)
-7. [Five-minute final review](#five-minute-final-review)
+6. [Three-finding example: Stored XSS + CSRF + Verbose Errors](#three-finding-example-stored-xss--csrf--verbose-errors)
+7. [One-finding / uncertain-impact alternatives](#one-finding--uncertain-impact-alternatives)
+8. [Quick impact and remediation lookup](#quick-impact-and-remediation-lookup)
+9. [Complete worked answers by vulnerability](#complete-worked-answers-by-vulnerability)
+10. [Five-minute final review](#five-minute-final-review)
 
 ## Which output does the test ask for?
 
