@@ -9,7 +9,8 @@
 1. [Which output does the test ask for?](#which-output-does-the-test-ask-for)
 2. [Fill these eight facts first](#fill-these-eight-facts-first)
 3. [Universal 100–150-word template](#universal-100150-word-template)
-4. [How to cover fixes for all findings](#how-to-cover-fixes-for-all-findings)
+4. [Impact vs Likelihood: How to justify the rating](#impact-vs-likelihood-how-to-justify-the-rating)
+5. [How to cover fixes for all findings](#how-to-cover-fixes-for-all-findings)
 5. [Three-finding example: Stored XSS + CSRF + Verbose Errors](#three-finding-example-stored-xss--csrf--verbose-errors)
 6. [One-finding / uncertain-impact alternatives](#one-finding--uncertain-impact-alternatives)
 5. [Quick impact and remediation lookup](#quick-impact-and-remediation-lookup)
@@ -36,7 +37,7 @@
 | 3 | **Main demonstrated behaviour** | Who did what to which resource and what changed |
 | 4 | **Prerequisite** | Account, role, victim interaction, token possession, network reachability |
 | 5 | **Business consequence** | Specific exposure, unauthorised transaction, account misuse, disruption |
-| 6 | **Risk justification** | Impact + ease/prerequisites + controls + evidence uncertainty |
+| 6 | **Risk justification** | **Impact** (what harm and to whom) + **Likelihood** (prerequisites, exposure, attack effort, existing controls) + **Rating reason** |
 | 7 | **Interim control** | Narrowest feasible mitigation, subject to operational review |
 | 8 | **Permanent fix + retest** | Root-cause control for the main finding; **short fixes for each other finding**; retesting expectations |
 
@@ -50,14 +51,32 @@
 
 **Paragraph 2 — Confirmed behaviour / business risk**
 
-> Testing confirmed that **[ROLE]** could **[PRECISE UNAUTHORISED ACTION]**. Although exploitation requires **[REAL PREREQUISITE]**, **[OBSERVED RESULT OR LIMIT OF CONTROL]**. If exploited in production, this could result in **[SPECIFIC CONSEQUENCE]**, potentially leading to **[DIRECT BUSINESS IMPACT]**. **[IMPORTANT LIMITATION: NO REAL LOSS / NO EVIDENCE OF ATTACK / IMPACT NOT ESTABLISHED]**.
+> Testing confirmed that **[ROLE]** could **[PRECISE UNAUTHORISED ACTION]**. Exploitation requires **[REAL PREREQUISITE]**; the likelihood is affected by **[ATTACK EFFORT + EXISTING CONTROLS + EXPOSURE]**. If exploited in production, this could result in **[SPECIFIC CONSEQUENCE]**, potentially leading to **[DIRECT BUSINESS IMPACT]**. **[IMPORTANT LIMITATION: NO REAL LOSS / NO EVIDENCE OF ATTACK / IMPACT NOT ESTABLISHED]**.
 
 **Paragraph 3 — Decision / action**
 
-> We recommend prioritising **[MAIN FINDING]** **[BASED ON EVIDENCE AND RISK]**. As an interim measure, **[NARROW MITIGATION]** should be considered after assessing its operational effect. The permanent fix should involve **[MAIN ROOT-CAUSE FIX]**, followed by retesting. For the other findings, **[FIX B]** and **[FIX C]** should be implemented according to their assessed risk.
+> We recommend prioritising **[MAIN FINDING]** as **[RATING]** because **[SPECIFIC IMPACT + REALISTIC LIKELIHOOD + CONTROLS]**. As an interim measure, **[NARROW MITIGATION]** should be considered after assessing its operational effect. The permanent fix should involve **[MAIN ROOT-CAUSE FIX]**, followed by retesting. For the other findings, **[FIX B]** and **[FIX C]** should be implemented according to their assessed risk.
 
 **Use:** Replace every bracketed field, remove unsupported claims, and count the final words. If there are fewer than three findings, adapt the first and final sentence; never invent findings to fill slots.
 
+
+## Impact vs Likelihood: How to justify the rating
+
+**These are different questions:**
+
+| Dimension | Question the reviewer expects | Example: stored XSS in staff ticket viewer |
+| --- | --- | --- |
+| **Confirmed evidence** | What did you personally observe? | A harmless script ran in a Support Agent's browser after opening a ticket |
+| **Potential impact** | If exploited further, what could happen to **which business asset/person**? | Unauthorised actions affecting customer-support records; actual theft was **not** demonstrated |
+| **Likelihood** | Who can reach it, which prerequisites apply, how hard is the exploit, and which controls work? | Customer login and staff interaction required; the test demonstrated execution once viewed |
+| **Risk rating** | Why does your proposed priority follow from **both** impact and likelihood? | A provisional rating must take staff privileges, ticket exposure and existing protections into account |
+| **Uncertainty** | What important consequences or conditions were **not** tested? | No session theft, account takeover or customer-data extraction established |
+
+**Copy-and-fill lines** — use only the parts that fit the evidence:
+
+> “Testing confirmed **[PRECISE BEHAVIOUR]**. If exploited, this could result in **[TECHNICAL CONSEQUENCE]**, potentially affecting **[CUSTOMERS / FINANCES / OPERATIONS]**. Exploitation requires **[PREREQUISITES]**, while **[ATTACK EFFORT / EXPOSURE / CONTROLS]** affects its likelihood. We recommend **[RATING / PRIORITY]** because **[IMPACT AND LIKELIHOOD REASONING]**.”
+
+Do **not** infer that a finding is High because it is internet-facing, or Medium just because an account is required. A confirmed weakness can coexist with uncertain attacker likelihood. For a 100–150-word summary, give the *main* issue the full risk explanation and cover the other findings through short, targeted fixes.
 
 ## How to cover fixes for all findings
 
