@@ -10,6 +10,7 @@
 2. [Fill these eight facts first](#fill-these-eight-facts-first)
 3. [Universal 100–150-word template](#universal-100150-word-template)
 4. [Impact vs Likelihood: How to justify the rating](#impact-vs-likelihood-how-to-justify-the-rating)
+- [Summary of Findings — overview, table and remediation](#summary-of-findings--overview-table-and-remediation)
 5. [How to cover fixes for all findings](#how-to-cover-fixes-for-all-findings)
 6. [Three-finding example: Stored XSS + CSRF + Verbose Errors](#three-finding-example-stored-xss--csrf--verbose-errors)
 7. [One-finding / uncertain-impact alternatives](#one-finding--uncertain-impact-alternatives)
@@ -27,6 +28,41 @@
 | **Full report** | Executive Summary + summary table + one Template B per confirmed finding | Credentials and private customer data |
 
 **Default length for a timed executive-summary exercise:** 100–150 words unless the instructions specify otherwise. Risk ratings are **illustrative**, not automatic CVSS scores or substitutes for the client's methodology.
+
+## Summary of Findings — overview, table and remediation
+
+**When the test explicitly asks for a “Summary of Findings”**, do not assume it means a 100–150-word Executive Summary. Unless the test specifies a different format or length, a useful, compact submission consists of:
+
+1. **Overall assessment** — scope, number of findings and most significant demonstrated risk.
+2. **Findings register** — one row per issue, with severity, observed evidence, potential impact and a targeted fix.
+3. **Prioritised remediation** — interim action for the main issue, permanent fix and retest, then secondary actions.
+4. **Evidence limitations** — what the test did *not* establish.
+
+**Copy-and-fill template**
+
+> **Scope:** The assessment of **[APPLICATION / APIs]** identified **[NUMBER]** findings. The main concern is **[MAIN FINDING]**, which testing confirmed **[PRECISE BEHAVIOUR]**. Exploitation requires **[PREREQUISITES]**; **[RISK RATIONALE]**. Potential business consequences include **[SPECIFIC HARM]**, but **[UNKNOWN IMPACT]** was not established.
+
+| ID | Finding | Severity | Confirmed evidence | Potential business impact | Recommended fix |
+| --- | --- | --- | --- | --- | --- |
+| F01 | [Main finding] | [Rating + rationale] | [Observed behaviour] | [What could happen and to whom] | [Root-cause fix] |
+| F02 | [Other finding] | [Rating] | [Observed behaviour or **Not yet validated**] | [Conditional effect] | [Specific fix] |
+| F03 | [Other finding] | [Rating] | [Observed behaviour or **Not yet validated**] | [Conditional effect] | [Specific fix] |
+
+> **Priority 1:** Consider **[NARROW INTERIM MITIGATION]** after assessing service disruption. Implement **[MAIN PERMANENT FIX]** and retest **[EXPECTED SECURE BEHAVIOUR]**. Then address F02 and F03 according to their evidenced risk, applying **[FIX 2]** and **[FIX 3]**. Retest the changed functionality.
+
+### Worked example — Stored XSS, CSRF and verbose errors (fictional)
+
+**Overall assessment:** The assessment of an internet-facing customer-support portal and REST APIs identified three findings. Stored XSS is the main concern: customer-submitted script executed when a Support Agent opened a ticket. Exploitation requires a customer account and agent interaction. This could enable unauthorised browser actions affecting support workflows; no data theft or account takeover was demonstrated.
+
+| Finding | Severity | Confirmed evidence | Potential business impact | Remediation |
+| --- | --- | --- | --- | --- |
+| Stored XSS | High, provisional | A harmless submitted script executed in an agent's browser | Unauthorised actions in the agent session; potential disruption or exposure of accessible information | Context-appropriate output encoding and safe rendering |
+| CSRF | Medium, provisional | A cross-origin form changed a signed-in test customer's delivery address | Unintended delivery-address changes and fulfilment problems | Effective CSRF protection and appropriate cookie/origin controls |
+| Verbose errors | Low, provisional | Malformed API requests exposed stack traces, without secrets | Framework details may assist further attacks | Generic client-facing errors; detailed diagnostics in server-side logs |
+
+**Prioritised actions:** Temporarily display untrusted ticket content as plain text where operationally feasible and approved by the client. Implement safe rendering and retest ticket submissions and the agent viewer. Then apply CSRF defences, retest address changes from both legitimate and cross-origin contexts, and remove unnecessary stack traces from API responses. Review the ratings against the actual agent privileges, exposure and existing controls.
+
+**Important:** This is an *overview*, not a substitute for full reproduction steps, HTTP evidence, screenshots or detailed risk analysis when the test asks for those deliverables. Do not invent secondary findings or label unverified behaviour as confirmed.
 
 ## Fill these eight facts first
 
