@@ -158,7 +158,21 @@ function listItems(arr){if(arr.length===1)return arr[0];if(arr.length===2)return
 function clause(s){s=clean(s);s=s.replace(/^testing (?:confirmed|demonstrated|showed)\s+(?:that\s+)?/i,'');return lower(s);}
 function safeValue(s,placeholder){return clean(s)||'['+placeholder+']';}
 function findingLabel(f){return (SHORT_TITLE[f.key]||f.title)+(f.severity?' ('+f.severity+')':'');}
-function composeSummary(){const fs=state.findings;const main=fs.find(function(f){return f.id===state.primaryId;})||fs[0];const others=fs.filter(function(f){return f.id!==main.id;});
+function composeExamSummary(){
+ const fs=state.findings,main=fs.find(function(f){return f.id===state.primaryId;})||fs[0],others=fs.filter(function(f){return f.id!==main.id;});
+ const scope=clean(state.scope)||'[authorised web application / API]';
+ const first='The penetration test of '+scope+' identified '+numbered(fs.length)+' '+(fs.length===1?'finding: ':'findings: ')+listItems(fs.map(findingLabel))+'.';
+ let second=main.evidence?'Testing confirmed that '+clause(main.evidence)+'.':'[Add the actual test result for the main finding.]';
+ second+=' Exploitation requires '+lower(safeValue(main.prerequisite,'verified attack prerequisites'))+'.';
+ second+=' If exploited, this could result in '+lower(safeValue(main.business,'specific business or customer harm'))+'.';
+ if(main.limitations)second+=' The assessment did not demonstrate '+lower(main.limitations)+'.';
+ let third=main.severity?'We recommend prioritising '+(SHORT_TITLE[main.key]||lower(main.title))+' ('+main.severity+') because '+lower(safeValue(main.ratingWhy,'impact and likelihood need justification'))+'.':'Prioritisation requires a justified severity assessment.';
+ third+=' As an interim measure, the client could '+lower(safeValue(main.interim,'apply a suitable interim control'))+', subject to operational review.';
+ third+=' The client should '+lower(safeValue(main.permanent,'implement a permanent fix'))+' and retest the affected functionality.';
+ if(others.length){const fixes=others.map(function(f){return lower(clean(f.permanent)===clean(CATALOG[f.key].permanent)?SHORT_FIX[f.key]:safeValue(f.permanent,f.title+' remediation'));});third+=' For the remaining findings, '+listItems(fixes)+'.';}
+ return [first,second,third].join('\n\n');
+}
+function composeSummary(){if(state.mode==='exam')return composeExamSummary();const fs=state.findings;const main=fs.find(function(f){return f.id===state.primaryId;})||fs[0];const others=fs.filter(function(f){return f.id!==main.id;});
 const scope=clean(state.scope)||'[application and API tested]';
 const p1='The test of '+scope+' identified '+numbered(fs.length)+' '+(fs.length===1?'finding: ':'findings: ')+listItems(fs.map(findingLabel))+'.';
 let p2=main.evidence?'Testing confirmed that '+clause(main.evidence)+'.':'The primary issue requires confirmation of [specific observed behaviour].';
@@ -184,7 +198,43 @@ lines.push('**Severity:** '+(f.severity||'Not assessed')+'. **Rationale:** '+saf
 if(f.limitations)lines.push('**Not demonstrated:** '+clean(f.limitations)+'.');
 lines.push('');lines.push('## Interim mitigation');lines.push('');lines.push(clean(f.interim)+'. Assess operational impact and obtain client approval before changes.');lines.push('');lines.push('## Permanent remediation');lines.push('');lines.push(clean(f.permanent)+'.');lines.push('');lines.push('## Retesting');lines.push('');lines.push('Verify that '+lower(clean(f.retest))+'.');return lines.join('\n');}
 function countWords(s){const words=s.trim().match(/\b[\p{L}\p{N}£][\p{L}\p{N}£’'/-]*\b/gu);return words?words.length:0;}
-function updatePreview(){const ready=state.findings.filter(function(f){return !!clean(f.evidence);}).length;const selected=state.findings.find(function(f){return f.id===state.selectedDetailId;})||state.findings[0];const isSummary=state.tab==='summary';const primary=state.findings.find(function(f){return f.id===state.primaryId;});const focus=isSummary?primary:selected;const missing=[];if(!clean(focus.evidence))missing.push('confirmed evidence');if(!clean(focus.prerequisite))missing.push('attack prerequisite');if(!clean(focus.business))missing.push('specific business impact');if(!clean(focus.likelihood))missing.push('likelihood reasoning');if(!clean(focus.severity)||!clean(focus.ratingWhy))missing.push('severity and rationale');const warn=missing.length>0;$('evidenceCounter').textContent=ready+'/'+state.findings.length+' evidence filled';$('evidenceWarning').hidden=!warn;$('evidenceWarning').textContent='Draft — please add: '+missing.join(', ')+'. Check all claims before submission.';const status=$('reportStatus');status.textContent=warn?'Draft · risk fields incomplete':'Draft · verify every claim';status.classList.toggle('ok',!warn);$('previewCaption').textContent=isSummary?'Three-paragraph management summary':'Technical finding · Markdown export';const output=isSummary?composeSummary():composeDetail();$('preview').textContent=output;$('preview').classList.toggle('markdown',!isSummary);const words=countWords(output);$('wordCount').textContent=words+' words'+(isSummary&&words>150?' · over 150':isSummary&&words<100?' · under 100':'');$('wordCount').style.color=isSummary&&(words<100||words>150)?'#895d15':'#52647a';$('detailSelector').style.display=isSummary?'none':'block';$('tab-summary').setAttribute('aria-selected',String(isSummary));$('tab-detail').setAttribute('aria-selected',String(!isSummary));$('copyMessage').textContent='';}
+function updatePreview(){
+ const ready=state.findings.filter(function(f){return !!clean(f.evidence);}).length;
+ const selected=state.findings.find(function(f){return f.id===state.selectedDetailId;})||state.findings[0];
+ const isSummary=state.tab==='summary';
+ const primary=state.findings.find(function(f){return f.id===state.primaryId;})||state.findings[0];
+ const focus=isSummary?primary:selected;
+ const missing=[];
+ if(!clean(focus.evidence))missing.push('confirmed evidence');
+ if(!clean(focus.prerequisite))missing.push('attack prerequisite');
+ if(!clean(focus.business))missing.push('concrete business impact');
+ if(!clean(focus.severity)||!clean(focus.ratingWhy))missing.push('severity and short justification');
+ if(state.mode==='full'){
+   if(!clean(focus.likelihood))missing.push('likelihood reasoning');
+ }
+ const warn=missing.length>0;
+ if(state.mode==='exam'){
+   const done=[clean(primary.evidence),clean(primary.prerequisite),clean(primary.business),clean(primary.severity)&&clean(primary.ratingWhy)].filter(Boolean).length;
+   $('evidenceCounter').textContent='Main: '+done+'/4 essentials';
+ }else{
+   $('evidenceCounter').textContent=ready+'/'+state.findings.length+' evidence filled';
+ }
+ $('evidenceWarning').hidden=!warn;
+ $('evidenceWarning').textContent=(state.mode==='exam'?'Finish main finding: ':'Draft — please add: ')+missing.join(', ')+'. Validate all statements before submitting.';
+ const status=$('reportStatus');status.textContent=warn?'Draft · '+missing.length+' item(s) left':'Draft · proofread before submitting';
+ status.classList.toggle('ok',!warn);
+ $('previewCaption').textContent=isSummary?'Three-paragraph management summary':'Technical finding · Markdown export';
+ const output=isSummary?composeSummary():composeDetail();
+ $('preview').textContent=output;
+ $('preview').classList.toggle('markdown',!isSummary);
+ const words=countWords(output);
+ $('wordCount').textContent=words+' words'+(isSummary&&words>150?' · over 150':isSummary&&words<100?' · under 100':'');
+ $('wordCount').style.color=isSummary&&(words<100||words>150)?'#895d15':'#52647a';
+ $('detailSelector').style.display=isSummary?'none':'block';
+ $('tab-summary').setAttribute('aria-selected',String(isSummary));
+ $('tab-detail').setAttribute('aria-selected',String(!isSummary));
+ $('copyMessage').textContent='';
+}
 function selectTab(tab){state.tab=tab;updatePreview();}
 function loadExample(){const a=newFinding('xss');a.severity='High';a.area='support ticket viewer';a.evidence='a customer-submitted script executed when an agent opened a test ticket';a.prerequisite='a customer account and an agent opening the ticket';a.limitations='session theft or data theft';a.exposure='an internet-facing portal, with authenticated ticket submission';a.controls='safe rendering did not block execution in the staff view';a.business='disruption to support records or customer privacy';a.likelihood='customer registration and agent interaction';a.likelihoodLevel='Moderate';a.ratingWhy='staff-browser script execution was confirmed';a.impact='unauthorised actions in an agent browser';a.interim='temporarily display submitted ticket content as plain text';a.permanent='apply context-aware output encoding and safe rendering';const b=newFinding('csrf');b.severity='Medium';b.area='delivery address change API';b.evidence='a cross-origin form changed a logged-in test customer\'s delivery address';b.prerequisite='a signed-in customer visiting an external page';b.business='unauthorised delivery-address changes could disrupt order fulfilment';b.likelihood='a signed-in customer must visit a malicious external page';b.ratingWhy='a customer state change was confirmed but requires victim interaction';const d=newFinding('errors');d.severity='Low';d.area='API error handler';d.evidence='malformed requests returned framework stack traces without passwords or keys';d.business='information about the application framework may assist subsequent attacks';d.likelihood='anyone able to submit a malformed API request may see the detailed response';d.ratingWhy='only technical details were exposed; no further exploitation was shown';state.findings=[a,b,d];state.primaryId=a.id;state.selectedDetailId=a.id;state.scope='the internet-facing Customer Support Portal and REST APIs';state.demo=true;$('scopeInput').value=state.scope;renderFindings();}
 function reset(){const f=newFinding('bola');state.findings=[f];state.primaryId=f.id;state.selectedDetailId=f.id;state.scope='the web application and associated APIs';state.demo=false;state.tab='summary';$('scopeInput').value=state.scope;renderFindings();}
@@ -192,7 +242,7 @@ $('scopeInput').addEventListener('input',function(e){state.scope=e.target.value;
 $('findingList').addEventListener('input',function(e){const el=e.target;const id=el.dataset.id,field=el.dataset.field;if(!id||!field||field==='key'||field==='severity')return;const f=state.findings.find(function(x){return x.id===id;});if(!f)return;f[field]=el.value;state.demo=false;$('sampleFlag').classList.remove('show');if(field==='title'){const title=el.closest('.finding').querySelector('.finding-name');if(title)title.textContent=el.value;}updatePreview();});
 $('findingList').addEventListener('change',function(e){const el=e.target;const id=el.dataset.id,field=el.dataset.field;if(!id||!field)return;const f=state.findings.find(function(x){return x.id===id;});if(!f)return;if(field==='key'){const c=CATALOG[el.value];if(!c)return;f.key=el.value;f.title=c.title;f.area=c.area;f.impact=c.impact;f.interim=c.interim;f.permanent=c.permanent;f.retest=c.retest;f.evidence='';f.prerequisite='';f.exposure='';f.controls='';f.business='';f.likelihood='';f.likelihoodLevel='';f.ratingWhy='';f.limitations='';state.demo=false;renderFindings();}else if(field==='severity'||field==='likelihoodLevel'){f[field]=el.value;updatePreview();}});
 $('findingList').addEventListener('click',function(e){const btn=e.target.closest('button[data-action]');if(!btn)return;const id=btn.dataset.id;if(btn.dataset.action==='primary'){state.primaryId=id;state.selectedDetailId=id;renderFindings();}else if(btn.dataset.action==='remove'&&state.findings.length>1){state.findings=state.findings.filter(function(f){return f.id!==id;});if(state.primaryId===id)state.primaryId=state.findings[0].id;if(state.selectedDetailId===id)state.selectedDetailId=state.primaryId;renderFindings();}});
-$('addFinding').addEventListener('click',function(){if(state.findings.length>=MAX_FINDINGS)return;const f=newFinding('csrf');state.findings.push(f);renderFindings();const nodes=$('findingList').querySelectorAll('details.finding');const last=nodes[nodes.length-1];last.open=true;last.scrollIntoView({behavior:'smooth',block:'nearest'});});
+$('addFinding').addEventListener('click',function(){if(state.findings.length>=MAX_FINDINGS)return;const f=newFinding('csrf');state.findings.push(f);renderFindings();const nodes=$('findingList').querySelectorAll('details.finding');const last=nodes[nodes.length-1];if(last){last.open=true;last.scrollIntoView({behavior:'smooth',block:'nearest'});}else{$('findingList').scrollIntoView({behavior:'smooth',block:'nearest'});}});
 $('loadExample').addEventListener('click',loadExample);$('clearAll').addEventListener('click',reset);
 $('mode-exam').addEventListener('click',function(){setMode('exam');});$('mode-full').addEventListener('click',function(){setMode('full');});
 $('tab-summary').addEventListener('click',function(){selectTab('summary');});$('tab-detail').addEventListener('click',function(){setMode('full');selectTab('detail');});$('detailChoice').addEventListener('change',function(e){state.selectedDetailId=e.target.value;updatePreview();});
