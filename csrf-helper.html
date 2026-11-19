@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Client-side authorised CSRF lab helper. Paste a Burp request and generate a manually triggered GET link or HTML form.">
+<title>CSRF Lab Helper — Web AppSec</title>
+<style>
+:root{color-scheme:light;--ink:#183047;--muted:#52677b;--bg:#f2f6fb;--line:#d4e0eb;--blue:#155f9f;--teal:#16695e;--warn:#835717;font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;font-size:16px}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);line-height:1.54}button,input,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}a{color:var(--blue)}button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #58a9e8;outline-offset:2px}
+header{background:#102f50;color:white;border-bottom:4px solid #39b5ae}header>div{max-width:1210px;padding:15px 25px;margin:auto;display:flex;justify-content:space-between;gap:16px;align-items:center}header a{color:white;text-decoration:none;font-weight:760}header a:hover{text-decoration:underline}.brand{font-weight:860;font-size:1.05rem}.brand span{color:#9be8df}nav{display:flex;gap:19px;flex-wrap:wrap}
+main{max-width:1210px;margin:auto;padding:24px 25px 54px}.hero{padding:27px 29px;background:linear-gradient(120deg,#133b5d,#176080);color:#fff;border-radius:17px;margin-bottom:17px}.hero h1{margin:4px 0 9px;font-size:clamp(1.6rem,3vw,2.35rem);line-height:1.16}.hero p{margin:0;color:#e0eff8;max-width:900px}.eyebrow{font-size:.7rem;font-weight:850;letter-spacing:.12em;text-transform:uppercase;color:#a6e8dc}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:17px;align-items:start}.panel{background:#fff;border:1px solid var(--line);border-radius:15px;padding:21px;box-shadow:0 4px 23px rgba(20,52,82,.04)}.panel h2{font-size:1.12rem;margin:0 0 8px;font-weight:850}.panel h3{font-size:.93rem;margin:17px 0 8px}.sub{color:var(--muted);font-size:.87rem;margin:0 0 15px}
+label{display:block;font-weight:780;font-size:.9rem;margin-bottom:7px}.field{margin:0 0 13px}textarea,input[type=url]{display:block;width:100%;border:1.5px solid #bfd0df;border-radius:9px;padding:11px 12px;background:#fff;color:var(--ink);font-size:.89rem;line-height:1.45}textarea{resize:vertical;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.8rem;min-height:242px}#poc{min-height:218px}input[type=url]{min-height:44px}.help{font-size:.77rem;color:var(--muted);margin-top:6px}
+.controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:10px 0}.btn{border-radius:9px;padding:10px 13px;border:1px solid #bcd2e2;background:#fff;color:#1b527c;font-weight:780;font-size:.84rem;min-height:40px}.btn:hover{background:#edf6fd}.btn.primary{background:#1769b1;color:#fff;border-color:#1769b1}.btn.primary:hover{background:#12548c}.btn.success{background:var(--teal);color:#fff;border-color:var(--teal)}.btn.success:hover{background:#0b594e}.btn.tiny{min-height:34px;padding:7px 9px;font-size:.78rem}
+.auth{display:flex;gap:9px;align-items:flex-start;margin:14px 0;font-size:.85rem;font-weight:600}.auth input{flex-shrink:0;margin-top:5px}.status{font-size:.87rem;font-weight:750;min-height:23px;margin:8px 0 13px}.box{background:#f4f8fc;border-radius:10px;padding:13px;border:1px solid #dbe8f2;overflow-wrap:anywhere}.box p{font-size:.84rem;margin:4px 0}.note{background:#eaf3fa;border-left:4px solid #2699ba;padding:11px 12px;border-radius:7px;margin:10px 0;font-size:.83rem}.note.warn{background:#fff5e1;border-color:#dfab44;color:#73511a}.note.good{background:#e8f6ee;border-color:#4aa78d;color:#235e50}.live{background:#e8f6f0;border:1px solid #b4ded0;border-radius:10px;padding:13px}.live p{margin:0 0 9px;color:#2c5b4e;font-size:.82rem}.live a,.live button{display:inline-flex;align-items:center;background:var(--teal);border:0;border-radius:9px;padding:10px 14px;min-height:42px;color:#fff;font-weight:780;font-size:.85rem;text-decoration:none}.live a:hover,.live button:hover{background:#09564b}.hide{display:none!important}
+.notes{margin-top:18px}.quick{display:grid;grid-template-columns:1fr 1fr;gap:12px}.quick>div{background:#f6f9fc;border:1px solid #e0e8ef;border-radius:9px;padding:13px}.quick strong{display:block;margin-bottom:4px;font-size:.9rem}.quick p{margin:0;color:var(--muted);font-size:.82rem}table{border-collapse:collapse;width:100%;font-size:.83rem}th,td{padding:9px 8px;text-align:left;vertical-align:top;border-bottom:1px solid #d8e4ed}th{background:#eef4fa}.notes ol{padding-left:22px}.notes li{margin:6px 0}code{background:#e8eff5;padding:1px 4px;border-radius:4px;font-size:.91em}footer{max-width:1210px;margin:auto;color:var(--muted);font-size:.78rem;padding:0 25px 26px}
+@media(max-width:950px){.layout{grid-template-columns:1fr}}@media(max-width:620px){main{padding:14px 12px 35px}.hero{padding:21px 17px}.panel{padding:16px}.quick{grid-template-columns:1fr}header>div{padding:12px 15px;flex-wrap:wrap}nav{gap:11px}}
+</style>
+</head>
+<body>
+<header><div><a class="brand" href="index.html">⌁ Web AppSec <span>CSRF Lab Helper</span></a><nav><a href="index.html">Report Builder</a><a href="#notes">Quick Notes</a><a href="https://github.com/johnnyychiu/web-appsec-report-templates">GitHub</a></nav></div></header>
+<main>
+<section class="hero"><div class="eyebrow">Authorised labs · Browser-only</div><h1>Paste your Burp request → click a CSRF test</h1><p>貼入 Raw HTTP Request；工具會分析 URL、Method 同參數。支援嘅 GET / POST 會產生可手動按嘅 Link 或 Form，另可複製／下載獨立 HTML PoC。唔會自動發送任何測試請求。</p></section>
+<div class="layout">
+<section class="panel">
+<h2>1 · Paste a request</h2>
+<p class="sub">喺 Burp Proxy / Repeater 複製完整 HTTP Request。工具只喺 Browser 本機處理，唔會上傳；但建議先刪除真實 Cookie、Password 同私人資料。</p>
+<div class="field"><label for="raw">Raw HTTP request</label><textarea id="raw" spellcheck="false" placeholder="POST /profile/update HTTP/1.1&#10;Host: lab.example.test&#10;Cookie: session=REDACTED&#10;Content-Type: application/x-www-form-urlencoded&#10;&#10;displayName=CSRF-TEST"></textarea></div>
+<div class="field"><label for="base">Base URL override (optional)</label><input id="base" type="url" placeholder="https://lab.example.test"><div class="help">如果 Lab 用 HTTP 或特殊 Port，喺呢度填完整 Origin，例如 http://localhost:3000。其餘預設推斷 HTTPS。</div></div>
+<div class="controls"><button class="btn tiny" id="exPost" type="button">Example POST</button><button class="btn tiny" id="exGet" type="button">Example GET</button><button class="btn tiny" id="exJson" type="button">Example JSON / PATCH</button></div>
+<div class="controls"><button class="btn primary" id="generate" type="button">Generate CSRF PoC</button><button class="btn" id="reset" type="button">Clear</button></div>
+<label class="auth"><input type="checkbox" id="auth">I confirm this is an authorised lab with synthetic test data. Enable the live trigger.</label>
+<div class="note">Generate 只會準備 HTML；只有你另外按 <strong>Open test link / Submit test form</strong>，Browser 先會發送請求。</div>
+</section>
+<section class="panel">
+<h2>2 · Review &amp; trigger</h2>
+<p class="sub">真正 CSRF 必須證明另一個來源嘅 Browser Request 可以造成非預期 State Change，唔係單靠 200 OK。</p>
+<div id="status" class="status" role="status" aria-live="polite">Paste a request and click Generate CSRF PoC.</div>
+<div id="result" class="hide">
+<div class="box" id="details"></div>
+<div id="warnings"></div>
+<h3>Live browser trigger</h3>
+<div id="live" class="live"></div>
+<h3>Standalone PoC code</h3>
+<div class="field"><label for="poc">Generated HTML (editable after download)</label><textarea id="poc" readonly spellcheck="false"></textarea></div>
+<div class="controls"><button class="btn" type="button" id="copy">Copy HTML</button><button class="btn" type="button" id="download">Download csrf-poc.html</button></div>
+<p id="feedback" class="help" role="status" aria-live="polite"></p>
+</div>
+<div class="note warn"><strong>Limits:</strong> HTML Forms can send GET/POST, not PATCH/PUT/DELETE, nor custom <code>Authorization</code> headers. JSON, multipart and XML requests are not automatically converted because that could misrepresent actual browser behaviour. Check SameSite, Origin and CORS separately.</div>
+</section>
+</div>
+<section class="panel notes" id="notes">
+<h2>CSRF Quick Notes · 廣東話</h2>
+<p class="sub">60-minute Lab：先篩選真正會改資料嘅 Endpoints；唔需要逐個 API 都起 PoC。建議 CSRF 初步評估限制喺 5–8 分鐘。</p>
+<div class="quick">
+<div><strong>① Prioritise</strong><p>優先睇更改 Email、Profile、Address、Account Setting 嘅 Request。GET 通常只讀，但如果 GET 修改 State，都值得檢查。</p></div>
+<div><strong>② Check Authentication</strong><p>睇 <code>Cookie: session=...</code> 定係 <code>Authorization: Bearer ...</code>。Browser 可能自動帶 Cookie；普通 HTML Form 唔會自動加 Bearer Header。</p></div>
+<div><strong>③ Check Defences</strong><p>檢查 CSRF Token、<code>Origin</code>/<code>Referer</code>、Cookie <code>SameSite</code>、<code>Sec-Fetch-Site</code>。刪除 Token 喺 Repeater 成功唔等於已證實 CSRF。</p></div>
+<div><strong>④ Confirm the result</strong><p>喺已登入測試 Browser 開另一個來源嘅 PoC；睇 Burp HTTP History 係咪帶 Cookie，返回 App 核實 State 真係變咗。</p></div>
+</div>
+<h3>How to interpret the outcome</h3>
+<table><thead><tr><th>Observation</th><th>Conclusion</th></tr></thead><tbody>
+<tr><td>HTTP request appeared in Burp</td><td>Only proves the browser sent a request.</td></tr>
+<tr><td>Browser included session cookie and test state changed</td><td>Strong evidence of exploitable CSRF when the action was unauthorised by user intent.</td></tr>
+<tr><td>No Cookie or rejected 403</td><td>Inspect SameSite, Origin, CSRF Token and the selected test origin.</td></tr>
+<tr><td>PATCH / JSON / Bearer-only</td><td>Normal form not sufficient. CORS preflight and custom headers may prevent exploitation.</td></tr>
+</tbody></table>
+<h3>Quick procedure</h3>
+<ol><li>Capture one legitimate state-changing request with a synthetic test account.</li><li>Paste into this page and review the target, original authentication headers and omitted CSRF fields.</li><li>Click generated GET link or POST form manually in the signed-in Browser.</li><li>Inspect the actual Request in Burp and confirm the application state, not only HTTP status.</li><li>Write confirmed evidence and limitations in the <a href="index.html">Report Builder</a>.</li></ol>
+<div class="note">Opening downloaded HTML via <code>file://</code> can produce <code>Origin: null</code>; GitHub Pages has a different Origin. Both Browser cookie restrictions and application Origin checks can alter the result. A failed PoC does not necessarily prove the endpoint is secure.</div>
+<p class="help">Further reference: <a href="https://portswigger.net/burp/documentation/desktop/tools/engagement-tools/generate-csrf-poc" target="_blank" rel="noopener">PortSwigger — Generate CSRF PoC</a> · <a href="https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html" target="_blank" rel="noopener">OWASP — CSRF Prevention</a> · <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/form" target="_blank" rel="noopener">MDN — HTML Form</a></p>
+</section>
+</main>
+<footer>Only use this tool within a permitted test scope. This page does not store requests or send them to a server; the live trigger explicitly navigates to the authorised target.</footer>
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+let parsed=null,markup='';
+const sensitiveKey=/csrf|xsrf|authenticity|password|passwd|api.?key|access.?token|refresh.?token|^token$|session|secret/i;
+function escapeHtml(value){return String(value==null?'':value).replace(/[&<>"']/g,function(x){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x];});}
+function parse(raw,override){
+ if(!raw.trim())throw Error('Paste a Burp raw request first.');
+ if(raw.length>120000)throw Error('Request too long for this quick helper.');
+ const txt=raw.replace(/\r\n?/g,'\n'),split=txt.indexOf('\n\n');
+ const lines=(split<0?txt:txt.slice(0,split)).split('\n');
+ const body=split<0?'':txt.slice(split+2);
+ const first=(lines.shift()||'').trim(),match=/^([A-Z]+)\s+(\S+)\s+HTTP\/[12](?:\.\d+)?$/i.exec(first);
+ if(!match)throw Error('Expected a request line such as POST /profile/update HTTP/1.1.');
+ const method=match[1].toUpperCase(),target=match[2],headers={};
+ lines.forEach(function(line){
+  const i=line.indexOf(':');
+  if(i>0)headers[line.slice(0,i).trim().toLowerCase()]=line.slice(i+1).trim();
+  else if(/^:authority:\s*/i.test(line))headers.host=line.replace(/^:authority:\s*/i,'').trim();
+ });
+ const warnings=[],host=headers.host||'',contentType=(headers['content-type']||'').split(';')[0].toLowerCase().trim();
+ let base=(override||'').trim();
+ if(base){
+  let baseUrl;try{baseUrl=new URL(base);}catch(e){throw Error('Enter a full Base URL starting with http:// or https://.');}
+  if(!['http:','https:'].includes(baseUrl.protocol))throw Error('Base URL must use HTTP or HTTPS.');
+  base=baseUrl.origin;
+ }else if(host){
+  const local=/^(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(host);
+  base=(local?'http':'https')+'://'+host;
+  if(!local)warnings.push('Assumed HTTPS. Set Base URL override if your lab runs on HTTP.');
+ }else if(!/^https?:\/\//i.test(target)){
+  throw Error('No Host header; enter a Base URL override.');
+ }
+ let u;try{u=/^https?:\/\//i.test(target)?new URL(target):new URL(target,base);}catch(e){throw Error('The target URL is invalid. Check Host / Base URL.');}
+ if(!['http:','https:'].includes(u.protocol)||u.username||u.password)throw Error('Only HTTP(S) URLs without embedded username/password are accepted.');
+ u.hash='';
+ const query=[...u.searchParams.entries()];
+ u.search='';
+ query.forEach(function(pair){
+  if(sensitiveKey.test(pair[0]))warnings.push('Omitted sensitive URL parameter: '+pair[0]);
+  else u.searchParams.append(pair[0],pair[1]);
+ });
+ const cookie=!!headers.cookie,bearer=!!headers.authorization,csrfHeader=Object.keys(headers).some(k=>/csrf|xsrf|authenticity/i.test(k));
+ if(cookie)warnings.push('Original Cookie header is NOT copied. Browser cookies depend on SameSite and context.');
+ if(bearer)warnings.push('Authorization is NOT copied. Native forms cannot add a Bearer token.');
+ if(csrfHeader)warnings.push('Detected a CSRF header that a native HTML form cannot reproduce.');
+ let kind='unsupported',why='',fields=[];
+ if(method==='GET'){
+  kind='get';
+  if(body.trim())warnings.push('GET body ignored.');
+  warnings.push('GET is only a CSRF finding if the endpoint changes state.');
+ }else if(method==='POST'){
+  if(contentType==='application/x-www-form-urlencoded'||(!contentType&&(!body.trim()||body.includes('=')))){
+   kind='post';
+   if(!contentType)warnings.push('Form encoding inferred from body; original Content-Type was missing.');
+   new URLSearchParams(body).forEach(function(value,name){
+    if(sensitiveKey.test(name))warnings.push('Omitted CSRF or sensitive form field: '+name);
+    else fields.push({name,value});
+   });
+  }else{
+   why='Cannot reproduce '+(contentType||'unknown body encoding')+' as a simple native HTML form.';
+   warnings.push('JSON, XML, multipart and text/plain may require another technique or CORS preflight; not automatically converted.');
+  }
+ }else{
+  why='HTML form does not support '+method+'. Browser forms submit only GET or POST.';
+ }
+ if(bearer&&!cookie)warnings.push('Bearer-only authentication is unlikely to be triggered by an external plain HTML form.');
+ if(fields.length>45)throw Error('Too many form fields; narrow the test request.');
+ return {kind,method,url:u.href,contentType:contentType||'(not supplied)',fields,warnings,why,cookie,bearer,csrfHeader};
+}
+function codeFor(p){
+ const lines=['<!doctype html>','<html lang="en">','<head><meta charset="utf-8"><title>Authorised CSRF test</title></head>','<body>','<h2>CSRF lab proof of concept</h2>'];
+ if(p.kind==='get')lines.push('<a href="'+escapeHtml(p.url)+'" target="_blank" rel="noopener">Open test GET link</a>');
+ else if(p.kind==='post'){
+  lines.push('<form action="'+escapeHtml(p.url)+'" method="POST" enctype="application/x-www-form-urlencoded" target="_blank">');
+  p.fields.forEach(f=>lines.push('<input type="hidden" name="'+escapeHtml(f.name)+'" value="'+escapeHtml(f.value)+'">'));
+  lines.push('<button type="submit">Submit test POST form</button>','</form>');
+ }else lines.push('<p>Unsupported browser form format.</p>');
+ lines.push('</body>','</html>');
+ return lines.join('\n');
+}
+function warning(text){const n=document.createElement('p');n.className='note warn';n.textContent=text;$('warnings').appendChild(n);}
+function showTrigger(p){
+ const live=$('live');live.textContent='';
+ const info=document.createElement('p');
+ info.textContent=p.kind==='get'?'This opens a GET navigation. Verify the endpoint really changes state.':'Native cross-site form submission. The Browser controls cookies and Origin.';
+ live.appendChild(info);
+ if(p.kind==='get'){
+  const link=document.createElement('a');link.href=p.url;link.target='_blank';link.rel='noopener';link.textContent='Open test GET link';live.appendChild(link);
+ }else if(p.kind==='post'){
+  const form=document.createElement('form');form.action=p.url;form.method='POST';form.enctype='application/x-www-form-urlencoded';form.target='_blank';
+  p.fields.forEach(f=>{const input=document.createElement('input');input.type='hidden';input.name=f.name;input.value=f.value;form.appendChild(input);});
+  const b=document.createElement('button');b.type='submit';b.textContent='Submit test POST form';form.appendChild(b);
+  live.appendChild(form);
+ }else{
+  info.textContent='No clickable form was generated for this request type. Use an appropriate authorised Browser technique.';
+ }
+}
+function present(p){
+ parsed=p;markup=codeFor(p);$('result').classList.remove('hide');
+ $('status').textContent=p.kind==='unsupported'?'This request cannot be reproduced with a simple Browser form.':'PoC generated. Review it before manually triggering.';
+ const details=$('details');details.textContent='';
+ ['Method: '+p.method,'Target: '+p.url,'Original Content-Type: '+p.contentType,'Cookie header present: '+(p.cookie?'Yes':'No'),'Authorization header present: '+(p.bearer?'Yes':'No'),'CSRF header present: '+(p.csrfHeader?'Yes':'No'),'Included form parameters: '+p.fields.length].forEach(t=>{const n=document.createElement('p');n.textContent=t;details.appendChild(n);});
+ $('warnings').textContent='';if(p.why)warning(p.why);p.warnings.forEach(warning);
+ $('live').textContent='';
+ if(p.kind==='unsupported'){
+  const pnode=document.createElement('p');pnode.textContent='No live link or form: request needs a different Browser technique.';$('live').appendChild(pnode);
+ }else if($('auth').checked)showTrigger(p);
+ else{
+  const n=document.createElement('p');n.textContent='Tick the authorised-lab confirmation to show the live trigger.';$('live').appendChild(n);
+ }
+ $('poc').value=markup;$('copy').disabled=p.kind==='unsupported';$('download').disabled=p.kind==='unsupported';$('feedback').textContent='';
+}
+function setExample(which){
+ $('auth').checked=false;$('base').value='https://lab.example.test';
+ if(which==='post')$('raw').value='POST /profile/update HTTP/1.1\nHost: lab.example.test\nCookie: session=REDACTED\nContent-Type: application/x-www-form-urlencoded\n\nname=CSRF-TEST&theme=light';
+ if(which==='get')$('raw').value='GET /settings/enable?flag=test HTTP/1.1\nHost: lab.example.test\nCookie: session=REDACTED';
+ if(which==='json')$('raw').value='PATCH /api/me HTTP/2\nHost: lab.example.test\nAuthorization: Bearer REDACTED\nContent-Type: application/json\n\n{"displayName":"CSRF-TEST"}';
+ $('result').classList.add('hide');$('status').textContent='Fictional example loaded. Click Generate CSRF PoC.';
+}
+$('generate').addEventListener('click',()=>{try{present(parse($('raw').value,$('base').value));}catch(err){parsed=null;$('result').classList.add('hide');$('status').textContent=err.message;}});
+$('auth').addEventListener('change',()=>{if(parsed)present(parsed);});
+$('reset').addEventListener('click',()=>{$('raw').value='';$('base').value='';$('auth').checked=false;$('result').classList.add('hide');$('status').textContent='Paste a request and click Generate CSRF PoC.';parsed=null;});
+$('exPost').addEventListener('click',()=>setExample('post'));
+$('exGet').addEventListener('click',()=>setExample('get'));
+$('exJson').addEventListener('click',()=>setExample('json'));
+$('copy').addEventListener('click',async()=>{if(!parsed||parsed.kind==='unsupported')return;try{await navigator.clipboard.writeText(markup);$('feedback').textContent='Copied HTML PoC.';}catch(e){$('poc').focus();$('poc').select();$('feedback').textContent='Select and copy the HTML manually.';}});
+$('download').addEventListener('click',()=>{if(!parsed||parsed.kind==='unsupported')return;const url=URL.createObjectURL(new Blob([markup],{type:'text/html;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='csrf-poc.html';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);$('feedback').textContent='Downloaded csrf-poc.html.';});
+})();
+</script>
+</body>
+</html>
