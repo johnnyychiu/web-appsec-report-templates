@@ -173,6 +173,53 @@ function listItems(arr){if(arr.length===1)return arr[0];if(arr.length===2)return
 function clause(s){s=clean(s);s=s.replace(/^testing (?:confirmed|demonstrated|showed)\s+(?:that\s+)?/i,'');return lower(s);}
 function safeValue(s,placeholder){return clean(s)||'['+placeholder+']';}
 function findingLabel(f){return (SHORT_TITLE[f.key]||f.title)+(f.severity?' ('+f.severity+')':'');}
+
+function findingsRows(){
+ return state.findings.map(function(f,i){
+  const c=CATALOG[f.key];
+  return {id:'F'+(i+1),title:f.title,severity:f.severity||'Not assessed',
+   evidence:clean(f.evidence)||'[Evidence not provided — verify before submission]',
+   impact:clean(f.business)||('Potential: '+c.impact),
+   fix:clean(f.permanent)===clean(c.permanent)?SHORT_FIX[f.key]:clean(f.permanent),
+   missing:!clean(f.evidence)};
+ });
+}
+function tableClean(v){return String(v==null?'':v).replace(/\|/g,'\\|').replace(/[\r\n]+/g,'; ');}
+function composeFindings(){
+ const main=state.findings.find(function(f){return f.id===state.primaryId;})||state.findings[0];
+ const rows=findingsRows();
+ const out=['# Summary of Findings','','## Overview','',
+  'The assessment of '+clean(state.scope)+' identified '+numbered(rows.length)+' '+(rows.length===1?'finding.':'findings.')];
+ if(main.evidence)out.push('The principal issue is '+lower(main.title)+'. Testing confirmed that '+clause(main.evidence)+'.');
+ else out.push('The principal issue requires confirmation: [add actual test evidence].');
+ out.push('Exploitation requires '+lower(safeValue(main.prerequisite,'verified prerequisites'))+'.');
+ if(main.business)out.push('Potential business impact: '+clean(main.business)+'.');
+ if(main.severity&&main.ratingWhy)out.push('Proposed priority: '+main.severity+' — '+clean(main.ratingWhy)+'.');
+ if(main.limitations)out.push('Not demonstrated: '+clean(main.limitations)+'.');
+ out.push('','## Findings register','','| ID | Finding | Severity | Evidence | Potential impact | Remediation |','| --- | --- | --- | --- | --- | --- |');
+ rows.forEach(function(r){out.push('| '+[r.id,r.title,r.severity,r.evidence,r.impact,r.fix].map(tableClean).join(' | ')+' |');});
+ out.push('','## Prioritised remediation','',
+  '1. Interim: '+safeValue(main.interim,'propose narrow temporary mitigation')+' (subject to operational approval).',
+  '2. Permanent: '+safeValue(main.permanent,'implement root-cause fix')+'. Retest: '+safeValue(main.retest,'verify the fix')+'.');
+ if(rows.length>1)out.push('3. Other findings: address the remaining items using the controls listed above, in risk-priority order.');
+ const absent=rows.filter(function(r){return r.missing;}).map(function(r){return r.id;});
+ out.push('','## Evidence limitations','',absent.length?'Evidence still needs to be recorded for '+listItems(absent)+'. Treat these as unverified until tested.':'Retain redacted request/response and state-change evidence for the confirmed results.');
+ out.push('Do not infer actual compromise, financial loss or regulatory breach without evidence.');
+ return out.join('\n');
+}
+function findingsVisualMarkup(){
+ const main=state.findings.find(function(f){return f.id===state.primaryId;})||state.findings[0];
+ const rows=findingsRows();
+ const tr=rows.map(function(r){return '<tr><td>'+escapeHTML(r.id)+'</td><td>'+escapeHTML(r.title)+'</td><td>'+escapeHTML(r.severity)+'</td><td>'+escapeHTML(r.evidence)+'</td><td>'+escapeHTML(r.impact)+'</td><td>'+escapeHTML(r.fix)+'</td></tr>';}).join('');
+ const head='<h3>Summary of Findings</h3><p><strong>Scope:</strong> '+escapeHTML(clean(state.scope))+'. <strong>Findings:</strong> '+rows.length+'.</p>';
+ const reasoning='<p><strong>Main issue:</strong> '+escapeHTML(main.title)+(main.severity?' ('+escapeHTML(main.severity)+')':'')+'. '+(main.evidence?'Confirmed observation: '+escapeHTML(clean(main.evidence))+'.':'Confirmed evidence not entered. ')+(main.prerequisite?' Prerequisites: '+escapeHTML(clean(main.prerequisite))+'.':'')+(main.business?' Potential business impact: '+escapeHTML(clean(main.business))+'.':'')+(main.ratingWhy?' Rating rationale: '+escapeHTML(clean(main.ratingWhy))+'.':'')+'</p>';
+ const table='<h4>Findings register</h4><div class="summary-table-scroll"><table class="findings-table"><thead><tr><th>ID</th><th>Finding</th><th>Severity</th><th>Evidence</th><th>Potential impact</th><th>Recommended fix</th></tr></thead><tbody>'+tr+'</tbody></table></div>';
+ const fix='<h4>Prioritised actions</h4><ol><li><strong>Interim:</strong> '+escapeHTML(main.interim)+' (subject to operational review).</li><li><strong>Permanent:</strong> '+escapeHTML(main.permanent)+'. <strong>Retest:</strong> '+escapeHTML(main.retest)+'.</li>'+(rows.length>1?'<li>Address the remaining findings using the controls in the table, prioritised by risk.</li>':'')+'</ol>';
+ const n=rows.filter(function(r){return r.missing;}).map(function(r){return r.id;});
+ const note='<p class="caution">Before submission: '+(n.length?'Evidence missing for '+escapeHTML(listItems(n))+'. ':'')+'Do not label untested issues as confirmed. Include redacted technical evidence where requested.</p>';
+ return head+reasoning+table+fix+note;
+}
+
 function composeExamSummary(){
  const fs=state.findings,main=fs.find(function(f){return f.id===state.primaryId;})||fs[0],others=fs.filter(function(f){return f.id!==main.id;});
  const scope=clean(state.scope)||'[authorised web application / API]';
