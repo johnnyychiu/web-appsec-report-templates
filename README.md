@@ -10,6 +10,15 @@ Practical, **copy-and-fill** Markdown templates and hands-on command references 
 
 The builder runs entirely in your browser; it does not transmit or store finding contents. It deliberately leaves confirmed evidence blank until you supply it. **Do not enter live client secrets or production personal data.**
 
+## Hands-on Lab Toolkit — Payload Library and Command Builder
+
+- **[Payload Library](payload-library.html)** — 50 context-aware, copy-ready test strings across eight categories: XSS (image, SVG, script and HTML attributes), SQLi (Boolean, error, UNION, timing), Traversal (plain and encoded paths), SSTI (Jinja2, Twig, FreeMarker, EJS/ERB, Liquid, Velocity), NoSQL, Command, XML and SSRF. Each includes what to observe and limitations. **Copy-only, never executes a payload.**
+- **[Command Builder](command-builder.html)** — Choose tool/mode, change as few inputs as necessary, then copy a Bash command for **ffuf, Gobuster, sqlmap, Nmap, Hydra, SSH (local forward, SOCKS, ProxyJump) or curl**. Conservative defaults limit request rates, concurrency and scope. **Never runs commands automatically.**
+
+**Suggested 60-minute Lab workflow:** Use [Payload Library](payload-library.html) for a specific manual test; use [Command Builder](command-builder.html) when you need a reproducible tool command; use [CSRF Helper](csrf-helper.html) only for a suitable browser-based request. Verify test evidence before entering [Report Builder](index.html).
+
+These are learning aids for authorised systems. Confirm that tools are installed, check provided wordlists and scope, do not copy real tokens or customer data, and avoid login guessing without express permission.
+
 ## CSRF Lab Helper — browser proof-of-concept generator
 
 **[Open CSRF Lab Helper](csrf-helper.html)** for a 5–8-minute authorised CSRF check. This separate page includes Cantonese notes, a Burp raw-request parser, and a **manually triggered GET link or application/x-www-form-urlencoded POST form**. Paste a request, review the target URL and authentication conditions, then explicitly enable the live trigger to open the request in a signed-in test browser. You can also **copy or download a standalone csrf-poc.html**.
