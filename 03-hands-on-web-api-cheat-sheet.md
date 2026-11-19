@@ -1,6 +1,6 @@
 # Template C — Hands-on Web / API Technical Test Cheat Sheet
 
-> **Use case:** Open-book, timed **authorised** Web/API hands-on assessments (for example, your own TryHackMe lab). Optimised for **Burp Suite Community + Repeater**, then `curl` / `jq` / `ffuf` if useful.  
+> **Use case:** Open-book, timed **authorised** Web/API hands-on assessments (for example, your own TryHackMe lab). Optimised for **Burp Suite Community + Repeater**, then `curl` / `jq` / `ffuf` / `sqlmap` if permitted.  
 > **Everything below is illustrative.** `lab.example.test`, user IDs, refunds and callback addresses are **fictional**. Use only approved targets, accounts and test records. Never publish live tokens, passwords, private client endpoints, personal records or unredacted screenshots.
 
 ## START HERE — 60-second triage
@@ -16,7 +16,7 @@
 | JSON body with `role`, `price`, `isAdmin` | [Mass assignment](#3-mass-assignment--untrusted-json-fields) |
 | Login, logout, refresh tokens, session cookies | [Session handling](#4-logout--session-token-replay) / [JWT](#13-jwt--token-inspection) |
 | OTP, password reset, login attempts | [Rate limiting](#5-otp--login-rate-limits) |
-| Search, filters, ID parameters, database errors | [SQL injection](#6-sqli--manual-differential-probe) |
+| Search, filters, ID parameters, database errors | [SQL injection](#6-sqli--manual-differential-probe) · [sqlmap narrow check](#sqlmap-narrow-sqli-verification-from-an-authorised-request) |
 | Comments, display names, HTML rendering | [XSS](#7-xss--reflection-and-execution) |
 | URL fetch, image importer, PDF preview, webhooks | [SSRF](#8-ssrf--owned-callback-only) |
 | Change-email, update profile, transfer forms | [CSRF](#9-csrf--browser-confirmation) |
@@ -62,7 +62,7 @@ read -rs TOKEN_A; echo; export TOKEN_A
 | `curl` + Burp | `curl -k -x http://127.0.0.1:8080 -i "$BASE/"` | Proxy through Burp; `-k` only if your lab proxy cert requires it |
 | `ffuf` | See next block | Small, **low-rate** content discovery if scope permits |
 
-**Low-impact `ffuf` example** — do **not** brute-force logins or scan unrelated hosts:
+**Low-impact `ffuf` example** — do **not** brute-force logins or scan unrelated hosts. See [wordlist choice and more ffuf examples](#ffuf-wordlist-selector--choose-by-the-thing-you-are-looking-for):
 
 ```bash
 printf '%s\n' api login profile orders users > small-paths.txt
@@ -70,6 +70,103 @@ ffuf -u "$BASE/FUZZ" -w small-paths.txt -t 1 -rate 3 -maxtime 45 -ac
 ```
 
 `-u` = URL with `FUZZ` placeholder; `-w` = wordlist; `-t 1` = one concurrent worker; `-rate 3` = at most 3 requests/sec; `-maxtime 45` = stop after 45 seconds; `-ac` = attempt to filter generic responses. **Verify any hit manually** in Repeater. Don’t use automatic enumeration where the test rules prohibit it.
+
+## ffuf wordlist selector — choose by the thing you are looking for
+
+**Don't pick the biggest dictionary by default.** Start with a short, task-specific list, establish the 404/wildcard baseline, and use longer lists only if time, scope and rate limits permit.
+
+### Common dictionaries (SecLists / Kali)
+
+Common Kali location: `/usr/share/seclists/`. Installation varies; check before running. An alternative for basic paths is `/usr/share/wordlists/dirb/common.txt`.
+
+| Task | Suggested wordlist | Example use |
+| --- | --- | --- |
+| General web paths, fastest first pass | `Discovery/Web-Content/common.txt` | `/admin`, `/api`, `/login`, likely directories/files |
+| Directory-focused discovery | `Discovery/Web-Content/raft-small-directories.txt` | Discover routes/subdirectories |
+| File-focused discovery | `Discovery/Web-Content/raft-small-files.txt` | Find typical file names; add selected extensions if applicable |
+| Word variants / route segments | `Discovery/Web-Content/raft-small-words.txt` | Probe additional path names |
+| Hidden GET/POST parameter names | `Discovery/Web-Content/burp-parameter-names.txt` | One benign parameter at a time on read-only endpoint |
+| API-specific routes | **Custom 10–30-line list** from observed UI/JS/HTTP history | Avoid irrelevant generic paths |
+| File extensions | **Custom list**: `php`, `html`, `json`, `txt`, `js` | Use ffuf `-e` flag rather than huge mixed lists |
+| In-scope virtual hosts (only if explicitly allowed) | `Discovery/DNS/subdomains-top1million-5000.txt` | Start with a tiny subset; not for broad public scanning |
+
+**Check availability:**
+
+```bash
+export SECLISTS=/usr/share/seclists
+ls "$SECLISTS/Discovery/Web-Content/common.txt"
+ls "$SECLISTS/Discovery/Web-Content/"raft-small-*.txt
+ls "$SECLISTS/Discovery/Web-Content/burp-parameter-names.txt"
+# If not installed: check /usr/share/wordlists/dirb/common.txt
+```
+
+### Copy-ready ffuf commands (on your authorised lab only)
+
+**A. Small path list — quickest first pass:**
+
+```bash
+printf '%s\n' admin api login profile orders assets > paths-small.txt
+ffuf -u "$BASE/FUZZ" -w paths-small.txt -ac -t 1 -rate 3 -maxtime 45
+```
+
+**B. Common paths from SecLists — consider restricting run time:**
+
+```bash
+ffuf -u "$BASE/FUZZ" \
+  -w "$SECLISTS/Discovery/Web-Content/common.txt" \
+  -ac -t 1 -rate 3 -maxtime 60
+```
+
+**C. Files with selected extensions:**
+
+```bash
+ffuf -u "$BASE/FUZZ" \
+  -w "$SECLISTS/Discovery/Web-Content/raft-small-words.txt" \
+  -e '.php,.html,.json,.txt' -ac -t 1 -rate 3 -maxtime 60
+```
+
+**D. One benign query-parameter name on a read-only route:**
+
+```bash
+# Tiny subset, because the complete parameter list is much longer.
+head -n 30 "$SECLISTS/Discovery/Web-Content/burp-parameter-names.txt" > params-small.txt
+ffuf -u "$BASE/api/search?FUZZ=harmless-marker" \
+  -w params-small.txt -ac -t 1 -rate 3 -maxtime 45
+```
+
+**E. Small custom API-route list based on the app you observed:**
+
+```bash
+printf '%s\n' api api/v1 api/v2 openapi.json swagger.json health > api-routes.txt
+ffuf -u "$BASE/FUZZ" -w api-routes.txt -ac -t 1 -rate 3 -maxtime 45
+```
+
+**Optional: only for authorised in-scope virtual-host discovery**, assuming `lab.example.test` resolves to your THM lab and the test rules permit Host header checks:
+
+```bash
+head -n 25 "$SECLISTS/Discovery/DNS/subdomains-top1million-5000.txt" > vhosts-small.txt
+ffuf -u "$BASE/" -H 'Host: FUZZ.lab.example.test' \
+  -w vhosts-small.txt -ac -t 1 -rate 3 -maxtime 45
+```
+
+A matching vhost header may not mean the DNS name resolves or that it belongs to your authorised scope. Don't expand scope automatically.
+
+### ffuf flags: what the results actually mean
+
+| Flag | Meaning | Practical advice |
+| --- | --- | --- |
+| `-w` | Wordlist file | Choose by path, file, parameter, vhost |
+| `FUZZ` | Placeholder in URL/header/body | Must appear where the candidate is substituted |
+| `-e` | Try suffixes/extensions | Useful for files; avoid unrelated extensions |
+| `-ac` | Automatic calibration | Helps remove generic wildcard responses; not always perfect |
+| `-mc` | Match HTTP status | Use `-mc all` only with careful filtering |
+| `-fc` | Filter HTTP status | E.g. `-fc 404`; beware custom not-found pages |
+| `-fs` | Filter body size | E.g. `-fs 1234` after confirming wildcard baseline |
+| `-t 1` | One worker | Gentler on lab server |
+| `-rate 3` | Maximum ~3 requests/second | Use the actual authorised ceiling |
+| `-maxtime 45` | Stop after a limited time | Prevent a long uncontrolled run |
+
+**False-positive check:** first send a random path like `/unlikely-test-5482`. If the app returns `200` for everything, compare **body size/content**, redirects and actual functionality rather than treating every `200` as a discovery. Review a small number of findings manually in Burp Repeater.
 
 ### One safe evidence worksheet (copy after each tested issue)
 
@@ -212,6 +309,47 @@ curl -i -sS -G "$BASE/search" --data-urlencode "q=sample' AND '1'='2"
 **Confirm:** consistent query-dependent behaviour, validated against normal input and application logic. A solitary `500` or error string is **not** proof. These fragments will not work in every query/database context.  
 **Avoid:** data dumps, destructive queries or heavy time-based tests unless explicitly authorised.  
 **Fix / retest:** parameterised queries; least-privileged database account; verify inputs are no longer interpreted as query syntax.
+
+### sqlmap: narrow SQLi verification from an authorised request
+
+**When to use:** Burp manual testing suggests an SQL injection in a **specific parameter**, and the rules of engagement allow automated SQLi testing. This complements — not replaces — evidence-based manual validation.
+
+**A. Simple GET parameter (fictional lab):**
+
+```bash
+sqlmap -u "$BASE/products?id=1" -p id \
+  --batch --level=1 --risk=1 --technique=BE \
+  --threads=1 --delay=0.2 --timeout=10 --retries=0
+```
+
+**B. POST / JSON / authenticated API — preferred practical method:**
+
+1. In Burp, intercept a **working authorised lab request** and save its full raw HTTP request to `request.txt` on your own machine.
+2. Include correct `Host`, method, content type, request body and valid **test** session/token.
+3. Restrict testing to the one parameter you suspect (example `q`).
+
+```bash
+chmod 600 request.txt                 # Tokens may be inside. Keep file private.
+sqlmap -r request.txt -p q \
+  --batch --level=1 --risk=1 --technique=BE \
+  --threads=1 --delay=0.2 --timeout=10 --retries=0
+```
+
+**How to choose:** `-u` for a simple GET URL; `-r` for a captured authenticated POST / JSON request; `-p` for the specific suspected parameter. `--technique=BE` restricts testing to boolean- and error-based probes. `--level=1 --risk=1` starts with a smaller, lower-risk test set. It still sends **multiple requests** and is not guaranteed harmless, especially on state-changing queries — use only where authorised.
+
+| Option | Purpose |
+| --- | --- |
+| `-u` / `-r` | Target URL / raw captured HTTP request |
+| `-p id` | Test only the named injection parameter |
+| `--batch` | Non-interactive prompts (can select defaults; review scope carefully) |
+| `--level=1` | Low default breadth; avoid `level 5` for time-limited testing |
+| `--risk=1` | Avoid higher-risk test classes |
+| `--technique=BE` | Boolean- and error-based; skips time-based and stacked-query tests |
+| `--threads=1` | One concurrent request |
+| `--delay=0.2` | Pause between requests |
+| `--timeout=10 --retries=0` | Bound each request and avoid retries |
+
+**Evidence standard:** A tool's "possible injection" warning is not enough for a client report. Identify the parameter, repeat a consistent true/false or other harmless difference, verify it isn't normal application behaviour, and document exact observed impact. **No `--dump`, `--os-shell`, file reads, stacked commands or disruptive extraction** in this quick-start workflow. Never commit `request.txt`, sqlmap traffic logs, credentials or tokens to GitHub.
 
 ### 7. XSS — reflection and execution
 
@@ -388,6 +526,8 @@ Run this command, paste your **lab-only JWT** into standard input, then send EOF
 - [PortSwigger — Burp Repeater](https://portswigger.net/burp/documentation/desktop/tools/repeater)
 - [PortSwigger — Reissuing requests](https://portswigger.net/burp/documentation/desktop/getting-started/reissuing-http-requests)
 - [ffuf — usage, flags and examples](https://github.com/ffuf/ffuf)
+- [sqlmap — official usage](https://github.com/sqlmapproject/sqlmap/wiki/usage)
+- [SecLists — web-content wordlists](https://github.com/danielmiessler/SecLists/tree/master/Discovery/Web-Content)
 - [ffuf — performance / rate controls](https://github.com/ffuf/ffuf/wiki/Performance-and-rate)
 - [OWASP Web Security Testing Guide](https://owasp.org/www-project-web-security-testing-guide/)
 
