@@ -12,16 +12,19 @@ The builder runs entirely in your browser; it does not transmit or store finding
 
 ## Quick start for a 30-minute written test
 
-The [interactive report builder](index.html) now opens in **Exam Mode** by default:
+The [interactive report builder](index.html) opens in **Exam Mode** with three report outputs:
 
-1. Enter the application / API scope and choose the **main vulnerability + severity**.
-2. Complete **five short fields** for the main finding: confirmed evidence, attack prerequisite, concrete business impact, severity justification, and any unproven outcome (optional). Only the first four are essential.
-3. Add secondary findings by **type and severity only**. Interim controls, permanent fixes, and retesting guidance are suggested automatically.
-4. Review the **100–150-word Executive Summary** and its word count; edit for evidence, risk and English; then **Copy** or **Download**.
+| Test instruction | Use this output | What it includes |
+| --- | --- | --- |
+| **Summary of Findings** | **Default tab** | Scope/overall risk, **one table row per finding** (severity, observed evidence, potential impact and fix), prioritised remediation and evidence limitations |
+| **Executive Summary** | Second tab | Concise **100–150-word** three-paragraph management overview when the task requests it |
+| **Detailed Finding / PoC** | Third tab (switches to Full Report) | Reproduction steps, evidence/screenshots, risk reasoning, remediation and retesting |
 
-Switch to **Full Report** for detailed reproduction, screenshots, separate exposure/likelihood/controls and editable remediation. Switching modes preserves the entered facts. The button for **Detailed Finding** switches to Full Report automatically.
+**Fast workflow:** Enter the scope, select the main finding and severity, then complete four essential short fields: **confirmed evidence, prerequisite, concrete business impact, and severity justification**. Add limitations when relevant. For secondary findings, select type/severity and optionally enter **one line of observed evidence**. Suggested fixes appear automatically. The Summary of Findings table flags missing evidence rather than presenting an unsupported claim as confirmed.
 
-The generated text is a **draft**, not a validated security assessment: keep the descriptions consistent with what your testing actually established and review any generic mitigation before recommending it to a client.
+**Exam Mode** hides advanced inputs; **Full Report Mode** restores detailed fields, including exposure, controls, likelihood and editable remediation. Mode switching preserves entered facts. The **Summary of Findings** table has **no automatic 150-word cap**; follow the actual test's length and format instructions.
+
+The builder generates a **draft**, not a validated security assessment. Check it against the authorised test evidence before submitting. Never enter real client secrets or personal data in the public repo.
 
 ## Open a template
 
